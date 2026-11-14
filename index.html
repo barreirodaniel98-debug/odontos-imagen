@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>odontOS Imagen</title>
+<style>
+:root{--bg:#14161a;--panel:#1c1f25;--line:#2c3038;--tx:#e8eaed;--mut:#8b919c;--ac:#4aa8ff;--ok:#4aff9a;--warn:#ffe14a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px -apple-system,system-ui,sans-serif;overflow:hidden}
+#app{display:grid;grid-template-rows:52px 28px 1fr;height:100vh}
+#bar{display:flex;align-items:center;gap:2px;padding:0 10px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+#bar .fl{flex:1;min-width:8px}
+.tb{display:flex;align-items:center;gap:6px;height:36px;min-width:36px;justify-content:center;padding:0 9px;border:1px solid transparent;background:transparent;border-radius:8px;flex:none}
+.tb .ic{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb:hover{background:#262a32;border-color:var(--line)}
+.tb:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.tb.on{background:var(--ac);color:#04101c;border-color:var(--ac)}
+.tb.pri{background:var(--ac);color:#04101c;border-color:var(--ac);font-weight:600}
+.tb.pri:hover{filter:brightness(1.08)}
+#infoBar{display:flex;align-items:center;padding:0 14px;color:var(--mut);font-size:12px;border-bottom:1px solid var(--line);background:var(--bg);white-space:nowrap;overflow:hidden}
+.pop{position:fixed;z-index:60;width:260px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.pop[hidden],#tip[hidden]{display:none}
+.pop label{display:block;color:var(--mut);font-size:12px;margin-top:9px}.pop label:first-child{margin-top:0}
+.pop select,.pop input{width:100%;margin-top:4px}
+#tip{position:fixed;z-index:70;background:#0d0f12;border:1px solid var(--line);color:var(--tx);font-size:12px;padding:4px 9px;border-radius:6px;pointer-events:none;white-space:nowrap}
+@media (max-width:1320px){.tb .tx{display:none}.tb{padding:0}}
+#bar .sep{width:1px;height:24px;background:var(--line);margin:0 4px;flex:none}
+button,select,input,textarea{font:inherit;color:var(--tx)}
+button,select{background:#262a32;border:1px solid var(--line);border-radius:7px;padding:6px 11px;cursor:pointer;flex:none}
+button:hover{border-color:var(--ac)} button.on{background:var(--ac);color:#04101c;border-color:var(--ac)} button.pri{background:var(--ac);color:#04101c;border-color:var(--ac);font-weight:600}
+label{color:var(--mut);display:flex;align-items:center;gap:6px;flex:none} input[type=range]{width:100px;accent-color:var(--ac)}
+#main{display:flex;min-height:0}
+#grid{flex:1;display:grid;grid-template-columns:1.1fr 1.7fr;grid-template-rows:1.15fr 1fr;gap:6px;padding:6px;min-height:0;min-width:0}
+.pane{position:relative;background:#000;border:1px solid var(--line);border-radius:8px;overflow:hidden;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
+.pane canvas{max-width:100%;max-height:100%;cursor:crosshair}
+.ruler .pane canvas{cursor:copy}
+.pane .t,.pane .i{z-index:2}
+#clin{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:15;display:flex;align-items:center;justify-content:center}
+#clin.off,#ayuda.off{display:none}#ayuda{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:15;display:flex;align-items:center;justify-content:center}
+.atajos{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin:10px 0}.atajos div{display:flex;gap:10px;align-items:baseline}.atajos b{min-width:62px;color:var(--ac);font-weight:600;white-space:nowrap}.atajos span{color:var(--tx)}.mbox{width:480px;max-width:94vw;max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.mbox h3{margin:0 0 6px}.mbox label{display:block;margin-top:10px}.mbox p{color:var(--mut);margin:0 0 4px}
+.imgs{display:flex;gap:14px;margin-top:12px}.imgs>div{flex:1;background:#14161a;border:1px solid var(--line);border-radius:8px;padding:8px}
+.imgs img{max-width:100%;max-height:70px;display:block;margin:6px 0;background:#fff;border-radius:4px}
+#pi{color:var(--mut);line-height:1.6;margin-bottom:6px}#pi b{color:var(--tx);font-weight:600}
+#ptxt{position:fixed;z-index:12;background:#0f1115;color:var(--tx);border:1px solid #ff7ab8;border-radius:6px;padding:5px 8px;width:200px}
+.pane .t{position:absolute;left:8px;top:7px;color:var(--mut);font-size:11px;letter-spacing:.04em;text-transform:uppercase;pointer-events:none}
+.pane .i{position:absolute;left:8px;bottom:6px;color:var(--mut);font-size:11px;pointer-events:none}
+.cam{position:absolute;right:8px;top:5px;z-index:2;padding:3px 9px;font-size:11px;background:rgba(38,42,50,.92)}
+#axial{grid-row:1/3} #low{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;min-height:0}
+#side{width:330px;flex:none;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#side.off{display:none}
+#tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--line)} #tabs button{flex:1;padding:6px 4px}
+.tp{flex:1;overflow:auto;padding:10px;display:none} .tp.on{display:block}
+.card{background:#14161a;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:10px}
+.card img{width:100%;border-radius:5px;display:block;background:#000}
+.inc{display:flex;align-items:center;gap:7px;color:var(--tx);margin:8px 0 2px}.inc input{accent-color:var(--ac)}
+.an{margin:6px 0;padding:6px 8px;background:rgba(255,255,255,.05);border-radius:6px;line-height:1.5}.an .al{color:#ff8a8a;font-weight:600}
+.v3{position:fixed;inset:0;z-index:40;background:#05070a;display:none;flex-direction:column}.v3.on{display:flex}
+.v3 .bar{display:flex;gap:10px;align-items:center;padding:8px 12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}.v3 .bar label{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:12px}
+.v3 .lienzo{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px}.v3 canvas{height:100%;max-width:100%;aspect-ratio:1;cursor:grab;background:#000;border-radius:8px}
+.cmg{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;overflow:auto}.cmg .c{display:flex;flex-direction:column;gap:4px;min-width:0}.cmg .c small{color:var(--mut)}.cmg canvas{width:100%;background:#000;border-radius:6px}.cmg input[type=range]{width:100%}
+.card h4{margin:8px 0 2px;font-size:12px}
+.cmp{display:block;color:var(--mut);margin-top:7px}.cmp select{width:100%;margin-top:3px}.cmp input[type=range]{width:100%;margin-top:2px}.card.sel{border-color:var(--ac)}
+#tabs button{font-size:12px;padding:6px 2px} .card small{color:var(--mut);display:block}
+textarea,input[type=text]{width:100%;background:#0f1115;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:6px;resize:vertical}
+.row{display:flex;gap:6px;margin-top:6px} .row button{flex:1;padding:4px 6px;font-size:12px}
+.m{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;margin-bottom:6px;cursor:pointer}
+.m b{color:var(--warn);min-width:62px} .m span{flex:1;color:var(--mut)} .m button{padding:1px 8px}
+.empty{color:var(--mut);text-align:center;padding:24px 8px}
+#start{position:absolute;inset:0;z-index:9;background:var(--bg);display:flex;align-items:center;justify-content:center}
+#start.off{display:none}
+#st{width:520px;max-width:92vw}
+#st h1{margin:0 0 4px;font-size:26px;font-weight:650} #st p{margin:0 0 22px;color:var(--mut)}
+#st .big{display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:10px;font-size:15px;border-radius:10px}
+#st .big small{display:block;color:inherit;opacity:.7;font-size:12px;margin-top:2px;font-weight:400}
+#st h3{margin:22px 0 8px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.rc{display:flex;gap:10px;align-items:center;width:100%;text-align:left;margin-bottom:6px;padding:9px 12px}
+.rc small{color:var(--mut);margin-left:auto}
+#smsg{margin-top:14px;color:var(--warn);min-height:18px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#262a32;border:1px solid var(--ac);border-radius:9px;padding:9px 16px;z-index:20;display:none}
+</style>
+</head>
+<body>
+<div id="start">
+ <div id="st">
+  <h1>odontOS Imagen</h1>
+  <p>Tomografías CBCT: panorámica, cortes, medidas, capturas e informe.</p>
+  <button class="big pri" id="sDicom">Abrir carpeta DICOM…<small>Lee los archivos del escáner (la primera vez tarda unos segundos)</small></button>
+  <button class="big" id="sVdc">Abrir caso guardado…<small>Archivo .oim: abre al instante con medidas, capturas y apuntes</small></button>
+  <div id="recw" style="display:none"><h3>Recientes</h3><div id="rec"></div></div>
+  <button class="big" id="sBack" style="display:none;margin-top:14px">Volver al caso abierto</button>
+  <div id="smsg"></div>
+ </div>
+</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2" /></symbol><symbol id="i-device-floppy" viewBox="0 0 24 24"><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" /> <path d="M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M14 4l0 4l-6 0l0 -4" /></symbol><symbol id="i-file-type-pdf" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4" /> <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /> <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" /> <path d="M17 18h2" /> <path d="M20 15h-3v6" /> <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1" /></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="M6 21l15 -15l-3 -3l-15 15l3 3" /> <path d="M15 6l3 3" /> <path d="M9 3a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" /> <path d="M19 13a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /> <path d="M13.5 6.5l4 4" /></symbol><symbol id="i-arrow-back" viewBox="0 0 24 24"><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></symbol><symbol id="i-ruler-measure" viewBox="0 0 24 24"><path d="M19.875 12c.621 0 1.125 .512 1.125 1.143v5.714c0 .631 -.504 1.143 -1.125 1.143h-15.875a1 1 0 0 1 -1 -1v-5.857c0 -.631 .504 -1.143 1.125 -1.143h15.75" /> <path d="M9 12v2" /> <path d="M6 12v3" /> <path d="M12 12v3" /> <path d="M18 12v3" /> <path d="M15 12v2" /> <path d="M3 3v4" /> <path d="M3 5h18" /> <path d="M21 3v4" /></symbol><symbol id="i-angle" viewBox="0 0 24 24"><path d="M21 19h-18l9 -15" /> <path d="M20.615 15.171h.015" /> <path d="M19.515 11.771h.015" /> <path d="M17.715 8.671h.015" /> <path d="M15.415 5.971h.015" /></symbol><symbol id="i-polygon" viewBox="0 0 24 24"><path d="M10 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M17 8a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M3 11a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M13 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M6.5 9.5l3.5 -3" /> <path d="M14 5.5l3 1.5" /> <path d="M18.5 10l-2.5 7" /> <path d="M13.5 17.5l-7 -5" /></symbol><symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M17 7l-10 10" /> <path d="M8 7l9 0l0 9" /></symbol><symbol id="i-dental" viewBox="0 0 24 24"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></symbol><symbol id="i-line-dashed" viewBox="0 0 24 24"><path d="M5 12h2" /> <path d="M17 12h2" /> <path d="M11 12h2" /></symbol><symbol id="i-cube-3d-sphere" viewBox="0 0 24 24"><path d="M6 17.6l-2 -1.1v-2.5" /> <path d="M4 10v-2.5l2 -1.1" /> <path d="M10 4.1l2 -1.1l2 1.1" /> <path d="M18 6.4l2 1.1v2.5" /> <path d="M20 14v2.5l-2 1.12" /> <path d="M14 19.9l-2 1.1l-2 -1.1" /> <path d="M12 12l2 -1.1" /> <path d="M18 8.6l2 -1.1" /> <path d="M12 12l0 2.5" /> <path d="M12 18.5l0 2.5" /> <path d="M12 12l-2 -1.12" /> <path d="M6 8.6l-2 -1.1" /></symbol><symbol id="i-columns-2" viewBox="0 0 24 24"><path d="M3 4a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v16a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-16" /> <path d="M12 3v18" /></symbol><symbol id="i-adjustments-horizontal" viewBox="0 0 24 24"><path d="M12 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M4 6l8 0" /> <path d="M16 6l4 0" /> <path d="M6 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M4 12l2 0" /> <path d="M10 12l10 0" /> <path d="M15 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M4 18l11 0" /> <path d="M19 18l1 0" /></symbol><symbol id="i-arrow-back-up" viewBox="0 0 24 24"><path d="M9 14l-4 -4l4 -4" /> <path d="M5 10h11a4 4 0 1 1 0 8h-1" /></symbol><symbol id="i-arrow-forward-up" viewBox="0 0 24 24"><path d="M15 14l4 -4l-4 -4" /> <path d="M19 10h-11a4 4 0 1 0 0 8h1" /></symbol><symbol id="i-zoom-reset" viewBox="0 0 24 24"><path d="M21 21l-6 -6" /> <path d="M3.268 12.043a7.017 7.017 0 0 0 6.634 4.957a7.012 7.012 0 0 0 7.043 -6.131a7 7 0 0 0 -5.314 -7.672a7.021 7.021 0 0 0 -8.241 4.403" /> <path d="M3 4v4h4" /></symbol><symbol id="i-layout-sidebar-right" viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /> <path d="M15 4l0 16" /></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><path d="M2 8a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2l0 -8" /> <path d="M6 10l0 .01" /> <path d="M10 10l0 .01" /> <path d="M14 10l0 .01" /> <path d="M18 10l0 .01" /> <path d="M6 14l0 .01" /> <path d="M18 14l0 .01" /> <path d="M10 14l4 .01" /></symbol><symbol id="i-building-hospital" viewBox="0 0 24 24"><path d="M3 21l18 0" /> <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" /> <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4" /> <path d="M10 9l4 0" /> <path d="M12 7l0 4" /></symbol></svg>
+<div id="app">
+ <div id="bar" role="toolbar" aria-label="Herramientas">
+  <button id="bOpen" class="tb" aria-label="Abrir caso o carpeta (⌘O)" data-tip="Abrir caso o carpeta (⌘O)"><svg class="ic" aria-hidden="true"><use href="#i-folder-open"/></svg><span class="tx">Abrir</span></button><button id="bSave" class="tb pri" aria-label="Guardar caso (⌘S)" data-tip="Guardar caso (⌘S)"><svg class="ic" aria-hidden="true"><use href="#i-device-floppy"/></svg><span class="tx">Guardar</span></button><button id="bPdf" class="tb" aria-label="Exportar informe PDF (⌘P)" data-tip="Exportar informe PDF (⌘P)"><svg class="ic" aria-hidden="true"><use href="#i-file-type-pdf"/></svg><span class="tx">Informe</span></button>
+  <div class="sep"></div>
+  <button id="bAuto" class="tb" aria-label="Detectar la arcada automáticamente" data-tip="Detectar la arcada automáticamente"><svg class="ic" aria-hidden="true"><use href="#i-wand"/></svg><span class="tx">Arcada auto</span></button><button id="bTrace" class="tb  tg" aria-label="Trazar la arcada a mano en el corte axial" data-tip="Trazar la arcada a mano en el corte axial"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg><span class="tx">Trazar</span></button><button id="bUndo" class="tb" aria-label="Deshacer el último punto de la arcada" data-tip="Deshacer el último punto de la arcada"><svg class="ic" aria-hidden="true"><use href="#i-arrow-back"/></svg></button>
+  <div class="sep"></div>
+  <button id="bRuler" class="tb  tg" aria-label="Regla (R)" data-tip="Regla (R)"><svg class="ic" aria-hidden="true"><use href="#i-ruler-measure"/></svg></button><button id="bAng" class="tb  tg" aria-label="Ángulo (A)" data-tip="Ángulo (A)"><svg class="ic" aria-hidden="true"><use href="#i-angle"/></svg></button><button id="bPol" class="tb  tg" aria-label="Área (P)" data-tip="Área (P)"><svg class="ic" aria-hidden="true"><use href="#i-polygon"/></svg></button><button id="bArr" class="tb  tg" aria-label="Hallazgo con flecha (F)" data-tip="Hallazgo con flecha (F)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+  <div class="sep"></div>
+  <button id="bImp" class="tb  tg" aria-label="Implante y corona (I)" data-tip="Implante y corona (I)"><svg class="ic" aria-hidden="true"><use href="#i-dental"/></svg><span class="tx">Implante</span></button><button id="bNer" class="tb  tg" aria-label="Nervio dentario (N)" data-tip="Nervio dentario (N)"><svg class="ic" aria-hidden="true"><use href="#i-line-dashed"/></svg><span class="tx">Nervio</span></button>
+  <div class="sep"></div>
+  <button id="b3d" class="tb" aria-label="Vista 3D" data-tip="Vista 3D"><svg class="ic" aria-hidden="true"><use href="#i-cube-3d-sphere"/></svg><span class="tx">Vista 3D</span></button><button id="bCmp" class="tb" aria-label="Comparar dos tomas" data-tip="Comparar dos tomas"><svg class="ic" aria-hidden="true"><use href="#i-columns-2"/></svg><span class="tx">Comparar</span></button><button id="bImg" class="tb  tg" aria-label="Imagen: tipo, brillo, contraste y grosor" data-tip="Imagen: tipo, brillo, contraste y grosor"><svg class="ic" aria-hidden="true"><use href="#i-adjustments-horizontal"/></svg></button>
+  <div class="fl"></div>
+  <button id="bUn" class="tb" aria-label="Deshacer (⌘Z)" data-tip="Deshacer (⌘Z)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-back-up"/></svg></button><button id="bRe" class="tb" aria-label="Rehacer (⇧⌘Z)" data-tip="Rehacer (⇧⌘Z)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-forward-up"/></svg></button><button id="bZoom" class="tb" aria-label="Zoom 1× (0)" data-tip="Zoom 1× (0)"><svg class="ic" aria-hidden="true"><use href="#i-zoom-reset"/></svg></button>
+  <div class="sep"></div>
+  <button id="bPanel" class="tb  tg" aria-label="Mostrar u ocultar el panel lateral" data-tip="Mostrar u ocultar el panel lateral"><svg class="ic" aria-hidden="true"><use href="#i-layout-sidebar-right"/></svg></button><button id="bAyuda" class="tb" aria-label="Atajos de teclado y ayuda (⌘/)" data-tip="Atajos de teclado y ayuda (⌘/)"><svg class="ic" aria-hidden="true"><use href="#i-keyboard"/></svg></button><button id="bClin" class="tb" aria-label="Datos de la clínica" data-tip="Datos de la clínica"><svg class="ic" aria-hidden="true"><use href="#i-building-hospital"/></svg></button>
+ </div>
+ <div id="infoBar"><span id="info"></span><span id="upd" style="margin-left:auto"></span></div>
+ <div id="pop" class="pop" hidden>
+  <label>Tipo de imagen <select id="pre"><option value="1000,3000">Hueso</option><option value="1500,2500">Dientes</option><option value="100,900">Tejido blando</option><option value="1500,1200">Alto contraste</option><option value="600,1600">Hueso esponjoso</option><option value="-150,700">Vía aérea y senos</option><option value="1300,1500">Conductos radiculares</option><option value="2000,2000">Metal e implantes</option></select></label>
+  <label>Brillo <input id="lvl" type="range" min="-300" max="2800" value="1000"></label>
+  <label>Contraste <input id="wid" type="range" min="200" max="3500" value="3000"></label>
+  <label>Grosor de la panorámica <select id="slab"><option value="3">3 mm</option><option value="6">6 mm</option><option value="10" selected>10 mm</option><option value="16">16 mm</option></select></label>
+ </div>
+ <div id="tip" role="tooltip" hidden></div>
+ <div id="main">
+  <div id="grid">
+   <div class="pane" id="axial"><span class="t">Axial</span><button class="cam" data-v="A">Captura</button><span class="i" id="iA"></span><canvas id="cA"></canvas></div>
+   <div class="pane" id="pano"><span class="t">Panorámica</span><button class="cam" data-v="P">Captura</button><span class="i" id="iP"></span><canvas id="cP"></canvas></div>
+   <div id="low">
+    <div class="pane"><span class="t">Transversal</span><button class="cam" data-v="X">Captura</button><span class="i" id="iX"></span><canvas id="cX"></canvas></div>
+    <div class="pane"><span class="t">Coronal</span><button class="cam" data-v="C">Captura</button><span class="i" id="iC"></span><canvas id="cC"></canvas></div>
+    <div class="pane"><span class="t">Sagital</span><button class="cam" data-v="S">Captura</button><span class="i" id="iS"></span><canvas id="cS"></canvas></div>
+   </div>
+  </div>
+  <aside id="side" class="off">
+   <div id="tabs"><button data-t="tomas">Tomas</button><button data-t="med">Medidas</button><button data-t="imp">Implantes</button><button data-t="notas">Apuntes</button></div>
+   <div class="tp" id="p-tomas"></div>
+   <div class="tp" id="p-med"></div>
+   <div class="tp" id="p-imp"></div>
+   <div class="tp" id="p-notas">
+     <div id="pi"></div>
+     <label style="display:block">Nombre del caso<input type="text" id="nNombre"></label>
+     <label style="display:block;margin-top:12px">Tipo de informe<select id="nPlant" style="width:100%;margin-top:4px"><option value="general">General</option><option value="implantes">Planificación de implantes</option><option value="endodoncia">Endodoncia</option><option value="ortodoncia">Ortodoncia</option><option value="atm">Articulación temporomandibular</option></select></label>
+     <button id="nGuia" style="margin-top:8px;width:100%">Insertar guía de esta plantilla en los apuntes</button>
+     <label style="display:block;margin-top:12px">Apuntes<textarea id="nNotas" rows="14" placeholder="Hallazgos, observaciones, plan…"></textarea></label>
+   </div>
+  </aside>
+ </div>
+</div>
+<div id="clin" class="off"><div class="mbox">
+ <h3>Datos de la clínica</h3><p>Aparecen en el encabezado y al pie de cada informe PDF. Se guardan en esta app, no en cada caso.</p>
+ <label>Clínica o consultorio<input type="text" id="cNom"></label>
+ <label>Doctor/a<input type="text" id="cDoc"></label>
+ <label>Registro profesional<input type="text" id="cReg"></label>
+ <label>Contacto (teléfono, correo, dirección)<input type="text" id="cCon"></label>
+ <div class="imgs"><div><b>Logo</b><img id="cLogoI" alt=""><div class="row"><button id="cLogoB">Elegir…</button><button id="cLogoQ">Quitar</button></div></div>
+ <div><b>Firma</b><img id="cFirmaI" alt=""><div class="row"><button id="cFirmaB">Elegir…</button><button id="cFirmaQ">Quitar</button></div></div></div>
+ <div class="row" style="margin-top:16px"><button id="cNo">Cancelar</button><button id="cOk" class="pri">Guardar</button></div>
+</div></div>
+<datalist id="hall"><option value="Lesión periapical"><option value="Caries"><option value="Fractura radicular"><option value="Fractura coronaria"><option value="Reabsorción radicular"><option value="Pérdida ósea"><option value="Diente retenido / impactado"><option value="Diente supernumerario"><option value="Quiste / lesión radiolúcida"><option value="Engrosamiento mucoso del seno"><option value="Tratamiento de conducto"><option value="Restauración / corona"><option value="Implante"><option value="Defecto óseo"><option value="Conducto dentario"><option value="Agujero mentoniano"><option value="Otro hallazgo"></datalist>
+<div id="ayuda" class="off"><div class="mbox" style="width:560px">
+ <h3>Atajos de teclado</h3>
+ <div class="atajos">
+  <div><b>R</b><span>Regla</span></div><div><b>A</b><span>Ángulo</span></div><div><b>P</b><span>Área</span></div><div><b>F</b><span>Hallazgo con flecha</span></div>
+  <div><b>I</b><span>Implante y corona</span></div><div><b>N</b><span>Nervio dentario</span></div><div><b>Enter</b><span>Cerrar el área</span></div><div><b>Esc</b><span>Cancelar herramienta o soltar selección</span></div>
+  <div><b>Supr</b><span>Borrar implante elegido</span></div><div><b>0</b><span>Zoom 1×</span></div><div><b>⌘ Z</b><span>Deshacer</span></div><div><b>⇧ ⌘ Z</b><span>Rehacer</span></div>
+  <div><b>⌘ O</b><span>Abrir carpeta DICOM</span></div><div><b>⇧ ⌘ O</b><span>Abrir caso guardado</span></div><div><b>⌘ S</b><span>Guardar caso</span></div><div><b>⌘ P</b><span>Exportar informe PDF</span></div>
+  <div><b>⌘ /</b><span>Esta ayuda</span></div><div><b>Rueda</b><span>Cambiar de corte (⇧ = de 10 en 10)</span></div><div><b>⌘ + rueda</b><span>Zoom en el cursor</span></div><div><b>Clic derecho + arrastrar</b><span>Mover la imagen con zoom</span></div>
+ </div>
+ <p style="color:var(--mut)">Clic sobre un implante o una corona lo selecciona; arrastrando se mueve esa pieza sola.</p>
+ <div class="row" style="margin-top:12px"><span id="verTxt" style="color:var(--mut);flex:1"></span><button id="bBuscarAct">Buscar actualizaciones</button><button id="ayCerrar" class="pri">Cerrar</button></div>
+</div></div>
+<div class="v3" id="v3"><div class="bar"><b>Vista 3D</b>
+  <button data-p="0,0">Frente</button><button data-p="1.571,0">Lateral der.</button><button data-p="-1.571,0">Lateral izq.</button><button data-p="3.1416,0">Atrás</button><button data-p="0,1.5708">Arriba</button>
+  <label>Umbral de hueso <input type="range" id="v3t" min="100" max="1500" step="25" value="400" style="width:120px"></label>
+  <label>Mostrar <select id="v3m"><option value="t">Todo</option><option value="c">Dientes en color</option><option value="d">Solo dientes</option><option value="s">Hueso sin dientes</option></select></label>
+  <label>Densidad de dientes <input type="range" id="v3d" min="800" max="2600" step="50" value="1300" style="width:110px"></label>
+  <label>Cortar abajo <input type="range" id="v3a" min="0" max="95" value="0" style="width:100px"></label>
+  <label>Cortar arriba <input type="range" id="v3b" min="5" max="100" value="100" style="width:100px"></label>
+  <label><input type="checkbox" id="v3s" checked> Incluir implantes y nervio</label><button id="v3e">Exportar STL</button><button id="v3c" class="pri">Capturar</button><button id="v3x">Cerrar</button><span id="v3i" style="color:var(--mut);font-size:12px">Arrastra para girar · rueda para acercar</span></div>
+  <div class="lienzo"><canvas id="c3"></canvas></div></div>
+<div class="v3" id="cmpv"><div class="bar"><b>Comparar tomas</b>
+  <button id="cmD">Cargar toma B (carpeta DICOM)…</button><button id="cmO">Cargar toma B (caso .oim)…</button>
+  <label>Modo <select id="cmM"><option value="s">Lado a lado</option><option value="o">Superpuesto (A rojo · B cian)</option><option value="d">Diferencia</option></select></label>
+  <button id="cmA">Alinear por centro de masa</button>
+  <label>Mover B (mm) X <input type="range" id="cmx" min="-60" max="60" value="0" style="width:90px"></label><label>Y <input type="range" id="cmy" min="-60" max="60" value="0" style="width:90px"></label><label>Z <input type="range" id="cmz" min="-60" max="60" value="0" style="width:90px"></label>
+  <button id="cmX">Cerrar</button><span id="cmI" style="color:var(--mut);font-size:12px"></span></div>
+  <div class="cmg" id="cmg"></div></div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const NOM={A:'Axial',C:'Coronal',S:'Sagital',P:'Panorámica',X:'Corte transversal',T:'Vista 3D'},CV={A:'cA',C:'cC',S:'cS',P:'cP',X:'cX'};
+let M,vol,nx,ny,nz,sp;
+let X=0,Y=0,Z=0,ai=0;
+let pts=[],tracing=false,curve=null,pano=null,panoW=0,zLo=0,zHi=256;
+let L=1000,W=3000;
+let CASE={nombre:'',notas:'',tomas:[]},MEAS=[],dirty=false;
+const RZ={a:0,b:1};
+let tool=null,rul=null,clean=false,pan=null,CLIN={},IMP=[],selImp=null,selPart='i',dragImp=null;
+const ZM={};for(const k in CV)ZM[k]={s:1,x:0,y:0};
+const lut=new Uint8ClampedArray(256);
+const V=(x,y,z)=>vol[(z*ny+y)*nx+x];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function toast(t,ms=2600){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',ms);}
+// historial: foto de lo editable (medidas, implantes, nervio, arcada) un instante después de cada cambio
+const HIS={u:[],r:[],t:null,last:null,activo:true};
+const foto=()=>JSON.stringify({m:MEAS,i:IMP,n:NERV,a:pts});
+function hisIni(){HIS.u=[];HIS.r=[];HIS.last=foto();}
+function hisFoto(){HIS.t=null;if(!HIS.activo||!vol)return;const f=foto();if(f===HIS.last)return;HIS.u.push(HIS.last);if(HIS.u.length>80)HIS.u.shift();HIS.last=f;HIS.r=[];}
+function touch(){dirty=true;api.sucio(true);title();clearTimeout(HIS.t);HIS.t=setTimeout(hisFoto,350);}
+function hisIr(de,a){
+  if(HIS.t){clearTimeout(HIS.t);hisFoto();}if(!de.length)return toast(de===HIS.u?'Nada que deshacer':'Nada que rehacer');
+  a.push(HIS.last);const f=de.pop();HIS.last=f;const o=JSON.parse(f);HIS.activo=false;
+  MEAS=o.m;IMP=o.i;NERV=o.n;NERV.v=(NERV.v||0)+1;if(selImp&&!IMP.some(i=>i.id===selImp))selImp=null;
+  if(JSON.stringify(o.a)!==JSON.stringify(pts)){pts=o.a;if(pts.length>1)buildCurve(true);else{curve=null;pano=null;}}
+  rul=null;dragImp=null;panel();panelImp();render();dirty=true;api.sucio(true);title();HIS.activo=true;
+}
+const deshacer=()=>hisIr(HIS.u,HIS.r),rehacer=()=>hisIr(HIS.r,HIS.u);
+function title(){document.title=(dirty?'• ':'')+'odontOS Imagen'+(CASE.nombre?' · '+CASE.nombre:'');}
+
+// ---- dibujo base ----
+function mkLut(){for(let u=0;u<256;u++){const hu=u/255*3500-500;lut[u]=clamp(((hu-(L-W/2))/W)*255,0,255);}}
+function draw(cv,w,h,get,after){
+  cv.width=w;cv.height=h;const c=cv.getContext('2d'),im=c.createImageData(w,h),d=im.data;let k=0;
+  for(let r=0;r<h;r++)for(let q=0;q<w;q++){const g=lut[get(q,r)|0];d[k++]=g;d[k++]=g;d[k++]=g;d[k++]=255;}
+  c.putImageData(im,0,0);if(after)after(c,w,h);
+}
+function line(c,x1,y1,x2,y2,col,lw=1){c.strokeStyle=col;c.lineWidth=lw;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}
+// ---- regla, ángulo y flechas ----
+const COL={len:'#ffe14a',ang:'#7dd3fc',arr:'#ff7ab8',pol:'#a3e635'};
+const polAr=P=>{let a=0,l=0;for(let j=0;j<P.length;j++){const A=P[j],B=P[(j+1)%P.length];a+=A[0]*B[1]-B[0]*A[1];l+=Math.hypot(B[0]-A[0],B[1]-A[1]);}return[Math.abs(a)/2*sp*sp,l*sp];};
+function polDraw(c,m,fs,abierto){
+  const P=m.p;c.save();c.strokeStyle=c.fillStyle=COL.pol;c.lineWidth=Math.max(1,fs/9);c.beginPath();P.forEach((q,j)=>j?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));if(!abierto)c.closePath();
+  if(!abierto){c.globalAlpha=.18;c.fill();c.globalAlpha=1;}c.stroke();for(const q of P){c.beginPath();c.arc(q[0],q[1],fs/6,0,7);c.fill();}
+  if(!abierto&&P.length>2){const[a,l]=polAr(P),cx=P.reduce((t,q)=>t+q[0],0)/P.length,cy=P.reduce((t,q)=>t+q[1],0)/P.length;lbl(c,a.toFixed(1)+' mm²',cx,cy,fs,COL.pol);}c.restore();
+}
+function lbl(c,t,x,y,fs,col){c.font='600 '+fs+'px -apple-system,sans-serif';c.textAlign='center';const w=c.measureText(t).width+8;c.fillStyle='rgba(0,0,0,.72)';c.fillRect(x-w/2,y-fs-4,w,fs+6);c.fillStyle=col;c.fillText(t,x,y-5);}
+function seg(c,m,fs){
+  c.save();c.strokeStyle=c.fillStyle=COL.len;c.lineWidth=Math.max(1,fs/9);
+  c.beginPath();c.moveTo(m.a[0],m.a[1]);c.lineTo(m.b[0],m.b[1]);c.stroke();
+  for(const p of [m.a,m.b]){c.beginPath();c.arc(p[0],p[1],fs/5,0,7);c.fill();}
+  lbl(c,(Math.hypot(m.b[0]-m.a[0],m.b[1]-m.a[1])*sp).toFixed(1)+' mm',(m.a[0]+m.b[0])/2,(m.a[1]+m.b[1])/2,fs,COL.len);c.restore();
+}
+function angOf(p){const[a,b,d]=p,v1=[a[0]-b[0],a[1]-b[1]],v2=[d[0]-b[0],d[1]-b[1]];return Math.abs(Math.atan2(v1[0]*v2[1]-v1[1]*v2[0],v1[0]*v2[0]+v1[1]*v2[1]))*180/Math.PI;}
+function angDraw(c,m,fs){
+  c.save();c.strokeStyle=c.fillStyle=COL.ang;c.lineWidth=Math.max(1,fs/9);const[a,b,d]=m.p;
+  for(const q of [a,d]){c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(q[0],q[1]);c.stroke();}
+  for(const q of m.p){c.beginPath();c.arc(q[0],q[1],fs/5,0,7);c.fill();}
+  const a1=Math.atan2(a[1]-b[1],a[0]-b[0]),a2=Math.atan2(d[1]-b[1],d[0]-b[0]);let df=a2-a1;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;
+  const r=fs*2.2;c.beginPath();c.arc(b[0],b[1],r,a1,a1+df,df<0);c.stroke();const mid=a1+df/2;
+  lbl(c,angOf(m.p).toFixed(1)+'°',b[0]+Math.cos(mid)*(r+fs*1.7),b[1]+Math.sin(mid)*(r+fs*1.7)+fs/2,fs,COL.ang);c.restore();
+}
+function arrDraw(c,m,fs){
+  c.save();c.strokeStyle=c.fillStyle=COL.arr;c.lineWidth=Math.max(1.5,fs/7);const a=m.a,b=m.b;
+  c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();
+  const an=Math.atan2(b[1]-a[1],b[0]-a[0]),hl=fs*1.6;c.beginPath();c.moveTo(b[0],b[1]);
+  c.lineTo(b[0]-hl*Math.cos(an-.4),b[1]-hl*Math.sin(an-.4));c.lineTo(b[0]-hl*Math.cos(an+.4),b[1]-hl*Math.sin(an+.4));c.closePath();c.fill();
+  const n=MEAS.filter(x=>x.t==='arr').indexOf(m)+1,tx=(n?n+'. ':'')+(m.txt||'');
+  if(tx)lbl(c,tx,a[0],a[1]-fs*0.3,fs,COL.arr);c.restore();
+}
+const dibujaM=(c,m,fs)=>(m.t==='ang'?angDraw:m.t==='arr'?arrDraw:m.t==='pol'?polDraw:seg)(c,m,fs);
+function meas(c,v,k,w,h){
+  const fs=Math.max(10,Math.round(Math.max(w,h)/36));
+  nervio(c,v,w,h);implantes(c,v,w,h);
+  for(const m of MEAS)if(m.v===v&&(v==='P'||m.k===k))dibujaM(c,m,fs);
+  if(rul&&rul.v===v){const P=rul.pts,q=rul.cur;
+    if(rul.t==='ang'){if(P.length===1){c.save();c.strokeStyle=COL.ang;c.lineWidth=Math.max(1,fs/9);c.beginPath();c.moveTo(P[0][0],P[0][1]);c.lineTo(q[0],q[1]);c.stroke();c.restore();}else angDraw(c,{p:[P[0],P[1],q]},fs);}
+    else if(rul.t==='pol')polDraw(c,{p:[...P,q]},fs,true);
+    else if(rul.t==='arr')arrDraw(c,{a:P[0],b:q},fs);else seg(c,{a:P[0],b:q},fs);}
+}
+const keyOf=v=>v==='A'?Z:v==='C'?Y:v==='S'?X:v==='X'?ai:0;
+
+// ---- arcada ----
+function buildCurve(keep){
+  if(!keep){MEAS=MEAS.filter(m=>m.v!=='P'&&m.v!=='X');}
+  if(pts.length<2){curve=null;pano=null;return;}
+  let P=pts.slice();if(P[0][0]>P[P.length-1][0])P.reverse();
+  const Q=[P[0],...P,P[P.length-1]],S=[];
+  for(let i=1;i<Q.length-2;i++)for(let t=0;t<1;t+=0.02){
+    const p0=Q[i-1],p1=Q[i],p2=Q[i+1],p3=Q[i+2],t2=t*t,t3=t2*t,f=(a,b,c,d)=>.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);
+    S.push([f(p0[0],p1[0],p2[0],p3[0]),f(p0[1],p1[1],p2[1],p3[1])]);
+  }
+  S.push(P[P.length-1]);
+  const xs=[],ys=[];let acc=0,prev=S[0];xs.push(prev[0]);ys.push(prev[1]);
+  for(const p of S){acc+=Math.hypot(p[0]-prev[0],p[1]-prev[1]);if(acc>=1){xs.push(p[0]);ys.push(p[1]);acc=0;}prev=p;}
+  const n=xs.length,nxv=[],nyv=[];let mx=0,my=0;for(const p of P){mx+=p[0];my+=p[1];}mx/=P.length;my/=P.length;
+  for(let i=0;i<n;i++){const a=Math.max(0,i-4),b=Math.min(n-1,i+4);let tx=xs[b]-xs[a],ty=ys[b]-ys[a];const m=Math.hypot(tx,ty)||1;tx/=m;ty/=m;
+    let ux=-ty,uy=tx;if((xs[i]-mx)*ux+(ys[i]-my)*uy<0){ux=-ux;uy=-uy;}nxv.push(ux);nyv.push(uy);}
+  curve={x:xs,y:ys,nx:nxv,ny:nyv,len:n};ai=Math.min(ai,n-1);
+  const zr0=Math.round(41/sp);zLo=Math.max(0,Math.min(Z-Math.round(7/sp),nz-zr0));zHi=Math.min(nz,zLo+zr0);
+  buildPano();
+}
+function buildPano(){
+  if(!curve)return;
+  const h=Math.round(+$('slab').value/2/sp),n=curve.len,zr=zHi-zLo;panoW=n;pano=new Float32Array(n*zr);
+  const step=Math.max(1,Math.round(h/6)),cnt=2*Math.floor(h/step)+1;
+  for(let i=0;i<n;i++)for(let z=zLo;z<zHi;z++){let s=0;
+    for(let o=-h;o<=h;o+=step){const x=Math.round(curve.x[i]+o*curve.nx[i]),y=Math.round(curve.y[i]+o*curve.ny[i]);s+=(x>=0&&x<nx&&y>=0&&y<ny)?V(x,y,z):0;}
+    pano[(zHi-1-z)*n+i]=s/cnt;}
+}
+
+// ---- vistas (cada una se dibuja sola para que la regla sea fluida) ----
+const R={
+  A(){draw($('cA'),nx,ny,(q,r)=>V(q,r,Z),(c,w,h)=>{
+    if(!clean){line(c,X,0,X,ny,'rgba(255,210,74,.5)');line(c,0,Y,nx,Y,'rgba(255,210,74,.5)');
+      if(curve){c.strokeStyle='#ff4a4a';c.lineWidth=1.5;c.beginPath();for(let i=0;i<curve.len;i++)i?c.lineTo(curve.x[i],curve.y[i]):c.moveTo(curve.x[i],curve.y[i]);c.stroke();
+        const hw=24/sp;line(c,curve.x[ai]-curve.nx[ai]*hw,curve.y[ai]-curve.ny[ai]*hw,curve.x[ai]+curve.nx[ai]*hw,curve.y[ai]+curve.ny[ai]*hw,'#4aff9a',2);}
+      c.fillStyle='#4aa8ff';for(const p of pts){c.beginPath();c.arc(p[0],p[1],3.5,0,7);c.fill();}
+      meas(c,'A',Z,w,h);}
+  });$('iA').textContent='corte '+Z+'/'+(nz-1);},
+  C(){draw($('cC'),nx,nz,(q,r)=>V(q,Y,nz-1-r),(c,w,h)=>{if(!clean){line(c,X,0,X,nz,'rgba(255,210,74,.5)');line(c,0,nz-1-Z,nx,nz-1-Z,'rgba(255,210,74,.5)');meas(c,'C',Y,w,h);}});$('iC').textContent='y '+Y;},
+  S(){draw($('cS'),ny,nz,(q,r)=>V(X,q,nz-1-r),(c,w,h)=>{if(!clean){line(c,Y,0,Y,nz,'rgba(255,210,74,.5)');line(c,0,nz-1-Z,ny,nz-1-Z,'rgba(255,210,74,.5)');meas(c,'S',X,w,h);}});$('iS').textContent='x '+X;},
+  P(){
+    if(!pano){$('cP').width=$('cP').height=1;$('iP').textContent='sin arcada: «Arcada automática» o «Trazar arcada»';return;}
+    draw($('cP'),panoW,zHi-zLo,(q,r)=>pano[r*panoW+q],(c,w,h)=>{if(!clean){line(c,ai,0,ai,h,'#4aff9a',1.5);line(c,0,zHi-1-Z,w,zHi-1-Z,'rgba(255,210,74,.5)');meas(c,'P',0,w,h);}});
+    $('iP').textContent='posición '+(ai*sp).toFixed(0)+' mm';},
+  X(){
+    if(!curve){$('cX').width=$('cX').height=1;$('iX').textContent='';return;}
+    const hw=Math.round(24/sp),w=2*hw;
+    draw($('cX'),w,zHi-zLo,(q,r)=>{const o=q-hw,x=Math.round(curve.x[ai]+o*curve.nx[ai]),y=Math.round(curve.y[ai]+o*curve.ny[ai]);return(x>=0&&x<nx&&y>=0&&y<ny)?V(x,y,zHi-1-r):0;},
+      (c,w2,h)=>{if(!clean){line(c,0,zHi-1-Z,w2,zHi-1-Z,'rgba(255,210,74,.5)');meas(c,'X',ai,w2,h);}});
+    $('iX').textContent=(ai*sp).toFixed(0)+' mm';}
+};
+let falloT=0;
+function render(){if(!vol)return;mkLut();
+  if(!Number.isFinite(X))X=nx>>1;if(!Number.isFinite(Y))Y=ny>>1;if(!Number.isFinite(Z))Z=nz>>1;if(!Number.isFinite(ai))ai=0;
+  for(const k in R){try{R[k]();}catch(e){console.error('vista '+k,e);if(Date.now()-falloT>6000){falloT=Date.now();toast('Una vista falló al dibujarse ('+NOM[k]+'). Las demás siguen. Si se repite, avísame.',5000);}}}
+  $('info').textContent=tool?({len:'Regla: clic en el punto inicial y en el final',ang:'Ángulo: clic en un extremo, en el vértice y en el otro extremo',arr:'Hallazgo: clic en el inicio y en la punta de la flecha, luego escribe qué es (o elige de la lista)',imp:'Implante: clic donde va (clic sobre uno existente para moverlo)',pol:'Área: clic en cada vértice; cierra haciendo clic en el primer punto (o Enter)',ner:'Nervio: haz clic sobre el conducto en el corte transversal o en la panorámica, de atrás hacia adelante; cada clic agrega un punto'}[tool]+' (Esc cancela)'):tracing?'Haz clic sobre la arcada en el corte axial (mínimo 2 puntos)':'';}
+
+// ---- interacción ----
+function cierraPol(){if(!rul||rul.t!=='pol'||rul.pts.length<3)return;const v=rul.v;MEAS.push({id:uid(),v,k:keyOf(v),t:'pol',p:rul.pts});rul=null;touch();panel();R[v]();}
+function pos(cv,e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*cv.width,(e.clientY-r.top)/r.height*cv.height];}
+function goAi(i){ai=clamp(i,0,curve.len-1);X=Math.round(curve.x[ai]);Y=Math.round(curve.y[ai]);}
+const NP={len:2,ang:3,arr:2};
+function pedirTexto(v,p,cb){
+  document.querySelectorAll('#ptxt').forEach(e=>e.remove());const cv=$(CV[v]),r=cv.getBoundingClientRect();
+  const i=h('input',{id:'ptxt',type:'text',placeholder:'Hallazgo o nota (Enter)',list:'hall'});i.style.left=Math.min(innerWidth-220,r.left+p[0]/cv.width*r.width)+'px';i.style.top=Math.min(innerHeight-40,r.top+p[1]/cv.height*r.height+10)+'px';
+  let hecho=false;const fin=ok=>{if(hecho)return;hecho=true;const t=ok?i.value.trim():'';i.remove();cb(t);};
+  i.addEventListener('keydown',e=>{if(e.key==='Enter')fin(true);if(e.key==='Escape')fin(false);});i.addEventListener('blur',()=>fin(true));
+  document.body.append(i);setTimeout(()=>i.focus(),0);
+}
+function toolClick(v,p,q){
+  if(tool==='imp')return impClick(v,p,q);
+  if(tool==='ner')return nerClick(v,p,q);
+  if(tool==='pol'){
+    if(!rul||rul.v!==v||rul.t!=='pol'){rul={v,t:'pol',pts:[[p,q]],cur:[p,q]};R[v]();return;}
+    const f=rul.pts[0];if(rul.pts.length>=3&&Math.hypot(p-f[0],q-f[1])<mm(1.5))return cierraPol();
+    rul.pts.push([p,q]);R[v]();return;}
+  if(!rul||rul.v!==v||rul.t!==tool){rul={v,t:tool,pts:[[p,q]],cur:[p,q]};R[v]();return;}
+  const l=rul.pts[rul.pts.length-1];if(Math.hypot(p-l[0],q-l[1])<3)return;
+  rul.pts.push([p,q]);if(rul.pts.length<NP[tool]){R[v]();return;}
+  const P=rul.pts,m={id:uid(),v,k:keyOf(v)};
+  if(tool==='ang'){m.t='ang';m.p=P;}else{m.a=P[0];m.b=P[1];if(tool==='arr'){m.t='arr';m.txt='';}}
+  const esFlecha=tool==='arr';rul=null;MEAS.push(m);touch();panel();R[v]();
+  if(esFlecha)pedirTexto(v,m.b,t=>{m.txt=t;touch();panel();R[v]();});
+}
+function aplicaZ(v){const z=ZM[v],cv=$(CV[v]);cv.style.transformOrigin='center';cv.style.transform=(z.s===1&&!z.x&&!z.y)?'':`translate(${z.x}px,${z.y}px) scale(${z.s})`;}
+function zoomEn(v,e,f){
+  const z=ZM[v],r=$(CV[v]).getBoundingClientRect(),cx=r.left+r.width/2-z.x,cy=r.top+r.height/2-z.y,s2=clamp(z.s*f,1,10);
+  z.x=e.clientX-cx-s2*((e.clientX-cx-z.x)/z.s);z.y=e.clientY-cy-s2*((e.clientY-cy-z.y)/z.s);z.s=s2;if(s2===1){z.x=0;z.y=0;}aplicaZ(v);
+}
+function zoomReset(){for(const k in ZM){ZM[k]={s:1,x:0,y:0};aplicaZ(k);}}
+addEventListener('mousemove',e=>{if(pan){const z=ZM[pan.v];z.x+=e.clientX-pan.x;z.y+=e.clientY-pan.y;pan.x=e.clientX;pan.y=e.clientY;aplicaZ(pan.v);}});
+addEventListener('mouseup',()=>{pan=null;if(dragImp){dragImp=null;touch();panelImp();}});
+function bind(v,onClick,onWheel){
+  const cv=$(CV[v]);let down=false;
+  const f=e=>{const[p,q]=pos(cv,e);onClick(p,q);render();};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('mousedown',e=>{if(!vol)return;
+    if(e.button!==0){pan={v,x:e.clientX,y:e.clientY};e.preventDefault();return;}
+    if(tool){const[p,q]=pos(cv,e);toolClick(v,p,q);return;}
+    {const[p,q]=pos(cv,e),h=hitImp(v,p,q);if(h){selecciona(v,p,q,h);openPanel('imp');return;}}
+    down=true;f(e);});
+  addEventListener('mouseup',()=>down=false);
+  cv.addEventListener('mousemove',e=>{if(!tool&&!dragImp&&IMP.length){const[p,q]=pos(cv,e);cv.style.cursor=hitImp(v,p,q)?'move':'';}if(dragImp&&dragImp.v===v){const[p,q]=pos(cv,e);moverImp(v,p,q);return;}if(tool&&rul&&rul.v===v){const[p,q]=pos(cv,e);rul.cur=[p,q];R[v]();return;}if(down&&!(v==='A'&&tracing))f(e);});
+  cv.addEventListener('wheel',e=>{e.preventDefault();if(!vol)return;
+    if(e.ctrlKey||e.metaKey||e.altKey){zoomEn(v,e,e.ctrlKey?Math.exp(-e.deltaY*0.01):(e.deltaY<0?1.2:1/1.2));return;}
+    onWheel(Math.sign(e.deltaY)*(e.shiftKey?10:1));render();},{passive:false});
+}
+bind('A',(p,q)=>{p=Math.round(p);q=Math.round(q);if(tracing){if(trazNueva){pts=[];trazNueva=false;}pts.push([p,q]);buildCurve();touch();}else{X=clamp(p,0,nx-1);Y=clamp(q,0,ny-1);}},d=>{Z=clamp(Z-d,0,nz-1);});
+bind('C',(p,q)=>{X=clamp(Math.round(p),0,nx-1);Z=clamp(nz-1-Math.round(q),0,nz-1);},d=>{Y=clamp(Y+d,0,ny-1);});
+bind('S',(p,q)=>{Y=clamp(Math.round(p),0,ny-1);Z=clamp(nz-1-Math.round(q),0,nz-1);},d=>{X=clamp(X+d,0,nx-1);});
+bind('P',(p,q)=>{if(!curve)return;goAi(Math.round(p));Z=clamp(zHi-1-Math.round(q),0,nz-1);},d=>{if(curve)goAi(ai+d*2);});
+bind('X',(p,q)=>{Z=clamp(zHi-1-Math.round(q),0,nz-1);},d=>{if(curve)goAi(ai+d*2);});
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+  const k=e.key.toLowerCase();if(k==='r')setTool('len');else if(k==='a')setTool('ang');else if(k==='f')setTool('arr');else if(k==='i')setTool('imp');else if(k==='n')setTool('ner');else if(k==='p')setTool('pol');else if(k==='enter')cierraPol();else if(k==='0')zoomReset();
+  else if(k==='escape'){rul=null;if(tracing){trazarOff();render();return;}if(tool)setTool(tool);else{selImp=null;panelImp();render();}}
+  else if((k==='delete'||k==='backspace')&&selImp&&!tool){IMP=IMP.filter(i=>i.id!==selImp);selImp=null;touch();panelImp();render();}});
+function setTool(t){tool=tool===t?null:t;rul=null;for(const[id,n]of[['bRuler','len'],['bAng','ang'],['bArr','arr'],['bImp','imp'],['bNer','ner'],['bPol','pol']])$(id).classList.toggle('on',tool===n);$('main').classList.toggle('ruler',!!tool);render();}
+$('bRuler').onclick=()=>setTool('len');$('bAng').onclick=()=>setTool('ang');$('bArr').onclick=()=>setTool('arr');$('bImp').onclick=()=>setTool('imp');$('bNer').onclick=()=>setTool('ner');$('bPol').onclick=()=>setTool('pol');$('bZoom').onclick=zoomReset;
+$('bAuto').onclick=()=>{if(!M||!M.auto||!M.auto.length)return toast('No se detectó la arcada: usa «Trazar arcada»');tracing=false;$('bTrace').classList.remove('on');pts=M.auto.map(p=>p.slice());Z=M.zAuto;buildCurve();goAi(Math.floor(curve.len/2));touch();panel();render();};
+// «Trazar» ya no borra la arcada al activarse: la arcada anterior se queda hasta el primer clic y se recupera si se cancela con menos de 2 puntos
+let trazPrev=null,trazNueva=false;
+function trazarOff(){if(!tracing)return;tracing=false;trazNueva=false;$('bTrace').classList.remove('on');if(trazPrev&&pts.length<2){pts=trazPrev;buildCurve(true);}trazPrev=null;}
+$('bTrace').onclick=()=>{if(tracing){trazarOff();render();return;}tracing=true;trazNueva=true;trazPrev=pts.map(q=>q.slice());$('bTrace').classList.add('on');render();};
+$('bUndo').onclick=()=>{if(!tracing)return toast('Activa «Trazar» para quitar puntos de la arcada. Para deshacer lo último usa ⌘Z.',4000);if(!pts.length||trazNueva)return;pts.pop();buildCurve();touch();panel();render();};
+$('pre').onchange=e=>{const[l,w]=e.target.value.split(',').map(Number);L=l;W=w;$('lvl').value=l;$('wid').value=w;render();};
+$('lvl').oninput=e=>{L=+e.target.value;render();};$('wid').oninput=e=>{W=+e.target.value;render();};
+$('slab').onchange=()=>{buildPano();render();};
+
+// ---- implantes y coronas (modelo genérico, planificación virtual) ----
+// Medidas medias de coronas por tipo de diente (mm): mesiodistal, vestibulolingual, altura; y implante sugerido
+const TOOTH={1:{md:8.5,bl:7,h:10.5,d:3.75,L:11.5},2:{md:6.5,bl:6,h:9,d:3.3,L:10},3:{md:7.5,bl:8,h:10.5,d:4.0,L:11.5},4:{md:7,bl:9,h:8.5,d:4.0,L:10},5:{md:7,bl:9,h:8,d:4.0,L:10},6:{md:10,bl:11,h:7.5,d:5.0,L:10},7:{md:9,bl:10.5,h:7,d:5.0,L:8},8:{md:8.5,bl:10,h:7,d:5.0,L:8}};
+const DIAM=[3.3,3.5,3.75,4.0,4.3,4.5,5.0,5.5,6.0],LONG=[6,7,8,10,11.5,13,15,16];
+const claseD=d=>d<=3.5?'estrecho':d<=4.5?'estándar':d<=5.5?'ancho':'extra ancho',claseL=l=>l<=8?'corto':l<=11.5?'estándar':'largo';
+const FDI=[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28,48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+const IC={cuerpo:'#a9bccf',borde:'#eaf3ff',rosca:'#5b7185',coronaF:'rgba(255,243,210,.82)',coronaB:'#ffe7a0',sel:'#4aa8ff'};
+const mm=v=>v/sp,dimsDe=i=>TOOTH[i.fdi%10]||TOOTH[6];
+const norm3=v=>{const m=Math.hypot(v[0],v[1],v[2])||1;return[v[0]/m,v[1]/m,v[2]/m];};
+function ejeImp(i){const tb=Math.tan(i.bl*Math.PI/180),td=Math.tan(i.md*Math.PI/180)*i.lado;return norm3([i.nx*tb+i.tx*td,i.ny*tb+i.ty*td,i.up]);}
+function crn(i){if(!i.c)i.c={x:i.x,y:i.y,z:i.z,bl:i.bl,md:i.md};return{...i,...i.c};} // corona = objeto aparte con su propio punto y ángulos
+function idxCurva(x,y){let b=0,bd=1e18;for(let j=0;j<curve.len;j++){const d=(curve.x[j]-x)**2+(curve.y[j]-y)**2;if(d<bd){bd=d;b=j;}}return b;}
+function tanEn(j){const a=Math.max(0,j-4),b=Math.min(curve.len-1,j+4);let ux=curve.x[b]-curve.x[a],uy=curve.y[b]-curve.y[a];const m=Math.hypot(ux,uy)||1;return[ux/m,uy/m];}
+function sectorAuto(s,arriba){ // diente sugerido por la posición sobre la arcada (línea media = centro de la curva)
+  const dmm=Math.abs(s-curve.len/2)*sp,lim=[8.5,15,22.5,29.5,36.5,47,56,64.5];let n=1;for(let j=0;j<lim.length;j++)if(dmm>=(j?lim[j-1]:0))n=j+1;
+  const der=s<curve.len/2;return(arriba?(der?1:2):(der?4:3))*10+n;
+}
+function a2(v,P){ // punto 3D en vóxeles → coordenadas de la imagen de cada vista
+  if(v==='A')return[P[0],P[1]];if(v==='C')return[P[0],nz-1-P[2]];if(v==='S')return[P[1],nz-1-P[2]];
+  if(v==='P')return[idxCurva(P[0],P[1]),zHi-1-P[2]];
+  return[Math.round(24/sp)+(P[0]-curve.x[ai])*curve.nx[ai]+(P[1]-curve.y[ai])*curve.ny[ai],zHi-1-P[2]];
+}
+function desdeVista(v,p,q){ // clic en una vista → ejes que esa vista define
+  if(v==='A')return{x:p,y:q};if(v==='C')return{x:p,z:nz-1-q};if(v==='S')return{y:p,z:nz-1-q};
+  if(!curve)return null;
+  if(v==='P'){const j=clamp(Math.round(p),0,curve.len-1);return{x:curve.x[j],y:curve.y[j],z:zHi-1-q};}
+  const o=p-Math.round(24/sp);return{x:curve.x[ai]+o*curve.nx[ai],y:curve.y[ai]+o*curve.ny[ai],z:zHi-1-q};
+}
+function nuevoImp(P){
+  const hay=!!curve;let j=hay?idxCurva(P.x,P.y):null,tx=1,ty=0,nx_=0,ny_=-1;
+  if(hay){[tx,ty]=tanEn(j);nx_=curve.nx[j];ny_=curve.ny[j];}
+  const up=(M.zAuto<nz/2)?1:-1; // raíces hacia arriba si los dientes están en la parte baja del volumen (maxilar superior)
+  const fdi=hay?sectorAuto(j,up>0):16,t=TOOTH[fdi%10];
+  return {id:uid(),fdi,d:t.d,L:t.L,x:P.x,y:P.y,z:P.z,tx,ty,nx:nx_,ny:ny_,up,bl:0,md:0,lado:hay&&j>=curve.len/2?1:-1,ai:j,corona:true,lig:false,c:{x:P.x,y:P.y,z:P.z,bl:0,md:0}};
+}
+function poli(c,pts,fill,stroke,lw){c.beginPath();pts.forEach((q,j)=>j?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();c.fillStyle=fill;c.fill();c.strokeStyle=stroke;c.lineWidth=lw;c.stroke();}
+const fCorona=t=>0.58+0.42*Math.sin(Math.PI*(0.12+0.76*t));
+function dibujaImpA(c,i){ // corte axial: se ve el círculo donde el plano atraviesa implante o corona
+  const e=ejeImp(i),d=dimsDe(i),sel=selImp===i.id&&selPart!=='c',selC=selImp===i.id&&selPart==='c',r=mm(i.d/2);c.save();
+  c.strokeStyle=sel?IC.sel:IC.borde;c.lineWidth=Math.max(1,r/6);
+  if(Math.abs(e[2])>1e-3){
+    const k=(Z-i.z)/e[2],Lp=mm(i.L);
+    if(k>=0&&k<=Lp){c.fillStyle=IC.cuerpo;c.globalAlpha=.9;c.beginPath();c.arc(i.x+e[0]*k,i.y+e[1]*k,r*(1-0.18*k/Lp),0,7);c.fill();c.globalAlpha=1;c.stroke();}
+  }
+  if(i.corona){const o=crn(i),ec=ejeImp(o),Hc=mm(d.h);
+    if(Math.abs(ec[2])>1e-3){const k=(Z-o.z)/ec[2];
+      if(k<0&&k>=-Hc){const t=-k/Hc,f=fCorona(t);c.fillStyle=IC.coronaF;c.strokeStyle=selC?IC.sel:IC.coronaB;c.beginPath();c.ellipse(o.x+ec[0]*k,o.y+ec[1]*k,mm(d.md/2)*f,mm(d.bl/2)*f,Math.atan2(i.ty,i.tx),0,7);c.fill();c.stroke();}}}
+  c.restore();
+}
+function dibujaImpL(c,v,i,fs){
+  const d=dimsDe(i),e=ejeImp(i),H=[i.x,i.y,i.z],Lp=mm(i.L),Hc=mm(d.h),at=k=>[H[0]+e[0]*k,H[1]+e[1]*k,H[2]+e[2]*k];
+  const o=crn(i),ec=ejeImp(o),q0=a2(v,[o.x,o.y,o.z]),pc=a2(v,[o.x-ec[0]*Hc,o.y-ec[1]*Hc,o.z-ec[2]*Hc]),p0=a2(v,H),p1=a2(v,at(Lp)),r=mm(i.d/2),sel=selImp===i.id&&selPart!=='c',selC=selImp===i.id&&selPart==='c';
+  let dist=0;if(v==='C')dist=Math.abs(i.y-Y);else if(v==='S')dist=Math.abs(i.x-X);else if(v==='X'){const t=tanEn(ai);dist=Math.abs((i.x-curve.x[ai])*t[0]+(i.y-curve.y[ai])*t[1]);}
+  c.save();c.globalAlpha=dist<=r*1.3?1:0.3;
+  const lw=Math.max(1,r/6),dx=p1[0]-p0[0],dy=p1[1]-p0[1],len=Math.hypot(dx,dy);
+  // corona
+  const dc=Math.hypot(pc[0]-q0[0],pc[1]-q0[1]);
+  if(i.corona&&dc>2){
+    const cx=(pc[0]-q0[0])/dc,cy=(pc[1]-q0[1])/dc,qx=-cy,qy=cx,Q=(a,b)=>[q0[0]+cx*a+qx*b,q0[1]+cy*a+qy*b];
+    const wc=mm(v==='P'?d.md/2:v==='X'?d.bl/2:v==='C'?Math.hypot(d.md/2*Math.abs(i.tx),d.bl/2*Math.abs(i.nx)):Math.hypot(d.md/2*Math.abs(i.ty),d.bl/2*Math.abs(i.ny)));
+    const ha=Math.min(mm(1.8),dc*0.22);
+    poli(c,[Q(0,r*0.8),Q(ha,r*0.8),Q(ha,-r*0.8),Q(0,-r*0.8)],'#8d9bab',selC?IC.sel:IC.borde,lw);
+    const L1=[],L2=[];for(let k=0;k<=14;k++){const t=k/14,a=ha+(dc-ha)*t,w=wc*fCorona(t);L1.push(Q(a,w));L2.push(Q(a,-w));}
+    poli(c,[...L1,...L2.reverse()],IC.coronaF,selC?IC.sel:IC.coronaB,lw*(selC?1.8:1));
+  }
+  if(len<2){c.fillStyle=IC.cuerpo;c.beginPath();c.arc(p0[0],p0[1],r,0,7);c.fill();c.strokeStyle=IC.borde;c.lineWidth=lw;c.stroke();c.restore();return;}
+  const ux=dx/len,uy=dy/len,px=-uy,py=ux,P=(o,a,b)=>[o[0]+ux*a+px*b,o[1]+uy*a+py*b];
+  if(SEG.on&&len>=2){const m=mm(SEG.m),mal=analisis(i).alertas.length>0,r3=r*0.82,ux2=dx/len,uy2=dy/len,vx=-uy2,vy=ux2,Pm=(a,b)=>[p0[0]+ux2*a+vx*b,p0[1]+uy2*a+vy*b];
+    c.save();c.setLineDash([mm(0.8),mm(0.6)]);c.strokeStyle=mal?'#ff5a5a':'#5adf8a';c.lineWidth=Math.max(1,r/8);c.beginPath();
+    [Pm(-m*0.2,r+m),Pm(len+m,r3+m),Pm(len+m,-r3-m),Pm(-m*0.2,-r-m)].forEach((q,j)=>j?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();c.stroke();c.restore();}
+  // implante cónico con rosca
+  const r2=r*0.82;poli(c,[P(p0,0,r),P(p0,len,r2),P(p0,len,-r2),P(p0,0,-r)],IC.cuerpo,sel?IC.sel:IC.borde,lw*(sel?1.8:1));
+  c.strokeStyle=IC.rosca;c.lineWidth=Math.max(1,r/10);
+  for(let s=mm(0.9);s<len-mm(0.5);s+=mm(0.9)){const rad=r*(1-0.18*s/len),a=P(p0,s,-rad),b=P(p0,s+r*0.4,rad);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+  c.restore();
+  lbl(c,String(i.fdi),(i.corona?pc[0]:p0[0]),(i.corona?pc[1]:p0[1])-fs*0.4,fs,IC.coronaB);
+}
+// ---- nervio dentario inferior: puntos que marca el doctor, unidos en una línea suave a lo largo de la arcada ----
+let NERV={d:2,p:[],v:0},nerC=null;
+function nerS(){ // muestras densas (una por posición de la arcada); se recalculan al cambiar los puntos o la arcada
+  if(!curve||NERV.p.length<1)return[];
+  if(nerC&&nerC.c===curve&&nerC.v===NERV.v)return nerC.s;
+  for(const q of NERV.p)q.a=idxCurva(q.x,q.y);NERV.p.sort((a,b)=>a.a-b.a);
+  const o=[],P=NERV.p;
+  for(let k=0;k<P.length-1;k++){const A=P[k],B=P[k+1],n=Math.max(1,Math.round(B.a-A.a));for(let j=0;j<n;j++){const t=j/n;o.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t,z:A.z+(B.z-A.z)*t,a:A.a+(B.a-A.a)*t});}}
+  const U=P[P.length-1];o.push({x:U.x,y:U.y,z:U.z,a:U.a});nerC={c:curve,v:NERV.v,s:o};return o;
+}
+function nerAt(a){const S=nerS();if(S.length<2||a<S[0].a-.5||a>S[S.length-1].a+.5)return null;let b=S[0],bd=1e9;for(const q of S){const d=Math.abs(q.a-a);if(d<bd){bd=d;b=q;}}return b;}
+const NC={lin:'#ff9f43',rel:'rgba(255,159,67,.3)'};
+function nervio(c,v,w,h){
+  const S=nerS();if(!S.length)return;const r=mm(NERV.d/2),lw=Math.max(1,r/3);c.save();c.strokeStyle=NC.lin;c.fillStyle=NC.rel;c.lineWidth=lw;
+  if(v==='P'){c.lineCap='round';c.lineJoin='round';c.lineWidth=Math.max(2,r*2);c.globalAlpha=.75;c.beginPath();S.forEach((q,j)=>{const y=zHi-1-q.z;j?c.lineTo(q.a,y):c.moveTo(q.a,y);});c.stroke();
+    c.globalAlpha=1;c.lineWidth=lw;for(const q of NERV.p){c.beginPath();c.arc(q.a,zHi-1-q.z,r*0.8,0,7);c.fillStyle='#fff';c.fill();c.stroke();}}
+  else if(v==='X'){const q=nerAt(ai);if(q){const p=a2('X',[q.x,q.y,q.z]);c.beginPath();c.arc(p[0],p[1],r,0,7);c.fill();c.stroke();if(SEG.on){c.save();c.setLineDash([mm(0.8),mm(0.6)]);c.beginPath();c.arc(p[0],p[1],r+mm(SEG.m),0,7);c.lineWidth=Math.max(1,r/6);c.stroke();c.restore();}}}
+  else for(const q of S){const d=v==='A'?Math.abs(q.z-Z):v==='C'?Math.abs(q.y-Y):Math.abs(q.x-X),cerca=d<=Math.max(r,mm(1.5));
+    if(v==='A'&&!cerca)continue;const p=a2(v,[q.x,q.y,q.z]);c.globalAlpha=cerca?.95:.28;c.beginPath();c.arc(p[0],p[1],r,0,7);c.fill();if(cerca)c.stroke();}
+  c.restore();
+}
+function nerClick(v,p,q){
+  if(!curve)return toast('Primero traza la arcada');
+  const P=desdeVista(v,p,q);if(!P)return;
+  NERV.p.push({x:X,y:Y,z:Z,...P});NERV.v++;touch();panelImp();render();
+}
+// ---- análisis de seguridad del implante: nervio, seno, cortical y densidad (estimaciones sobre la tomografía) ----
+const SEG={on:true,m:2}; // margen de seguridad en mm
+const huDe=u=>u/255*3500-500,U_HUESO=Math.round((90+500)/3500*255),U_AIRE=Math.round((-400+500)/3500*255);
+function vv(x,y,z){x=Math.round(x);y=Math.round(y);z=Math.round(z);return(x<0||y<0||z<0||x>=nx||y>=ny||z>=nz)?-1:V(x,y,z);}
+const claseHU=h=>h>=1250?'D1':h>=750?'D2':h>=350?'D3':h>=150?'D4':'D5';
+let anC=new Map();
+function analisis(i){
+  const key=[i.x,i.y,i.z,i.bl,i.md,i.d,i.L,i.up,i.fdi,NERV.v,NERV.d,curve?curve.len:0].join('|'),hit=anC.get(i.id);
+  if(hit&&hit.k===key)return hit.a;
+  const e=ejeImp(i),H=[i.x,i.y,i.z],Lp=mm(i.L),r=mm(i.d/2),at=k=>[H[0]+e[0]*k,H[1]+e[1]*k,H[2]+e[2]*k],a={};
+  // base perpendicular al eje para muestrear alrededor
+  let u=norm3([e[1],-e[0],0]);if(Math.hypot(e[0],e[1])<1e-3)u=[1,0,0];const w2=[e[1]*u[2]-e[2]*u[1],e[2]*u[0]-e[0]*u[2],e[0]*u[1]-e[1]*u[0]];
+  // densidad: promedio en el cilindro del implante
+  let sum=0,n=0;for(let k=0;k<=Lp;k+=mm(0.5)){const c=at(k);for(const[du,dw]of[[0,0],[.7,0],[-.7,0],[0,.7],[0,-.7]]){const q=vv(c[0]+(u[0]*du+w2[0]*dw)*r,c[1]+(u[1]*du+w2[1]*dw)*r,c[2]+(u[2]*du+w2[2]*dw)*r);if(q>=0){sum+=q;n++;}}}
+  a.hu=n?Math.round(huDe(sum/n)):null;a.clase=n?claseHU(a.hu):null;
+  // nervio: margen entre la pared del implante y la del conducto
+  const S=nerS();if(S.length>1){let m=1e9;for(let k=0;k<=Lp;k+=mm(0.5)){const c=at(k),rr=r*(1-0.18*k/Lp);for(const q of S){const d=Math.hypot(c[0]-q.x,c[1]-q.y,c[2]-q.z)*sp-rr*sp-NERV.d/2;if(d<m)m=d;}}a.ner=m;}
+  // seno / fosa nasal: primer aire más allá del ápice (solo maxilar)
+  if(i.up>0){a.seno=null;for(let k=mm(1);k<=Lp+mm(12);k+=mm(0.25)){const c=at(k),q=vv(c[0],c[1],c[2]);if(q<0)break;if(q<=U_AIRE){a.seno=(k-Lp)*sp;break;}}}
+  // cortical: hueso que queda a cada lado de la pared del implante (el lado vestibular es el que mira hacia fuera de la arcada)
+  if(curve){let cx=0,cy=0;for(let j=0;j<curve.len;j++){cx+=curve.x[j];cy+=curve.y[j];}cx/=curve.len;cy/=curve.len;
+    const sg=((i.x-cx)*i.nx+(i.y-cy)*i.ny)>=0?1:-1,nv=[i.nx*sg,i.ny*sg,0],d=nv[0]*e[0]+nv[1]*e[1]+nv[2]*e[2],dir=norm3([nv[0]-d*e[0],nv[1]-d*e[1],nv[2]-d*e[2]]);
+    const lado=sgn=>{let m=1e9;for(const f of[.25,.5,.75]){const c=at(Lp*f);let t=r;for(;t<mm(15);t+=mm(0.25)){const q=vv(c[0]+dir[0]*sgn*t,c[1]+dir[1]*sgn*t,c[2]+dir[2]*sgn*t);if(q<U_HUESO)break;}m=Math.min(m,(t-r)*sp);}return m;};
+    a.vest=lado(1);a.ling=lado(-1);}
+  // alertas
+  a.alertas=[];if(a.ner!=null&&a.ner<SEG.m)a.alertas.push('Nervio a '+Math.max(0,a.ner).toFixed(1)+' mm (mínimo '+SEG.m+' mm)');
+  if(a.seno!=null&&a.seno<SEG.m)a.alertas.push(a.seno<=0?'El implante entra al seno / fosa nasal':'Seno a '+a.seno.toFixed(1)+' mm');
+  if(a.vest!=null&&a.vest<1)a.alertas.push('Cortical vestibular fina ('+a.vest.toFixed(1)+' mm)');if(a.ling!=null&&a.ling<1)a.alertas.push('Cortical lingual fina ('+a.ling.toFixed(1)+' mm)');
+  anC.set(i.id,{k:key,a});return a;
+}
+function parAng(){const o=[];for(let a=0;a<IMP.length;a++)for(let b=a+1;b<IMP.length;b++){const p=ejeImp(IMP[a]),q=ejeImp(IMP[b]);o.push([IMP[a].fdi,IMP[b].fdi,Math.acos(clamp(p[0]*q[0]+p[1]*q[1]+p[2]*q[2],-1,1))*180/Math.PI]);}return o;}
+function resumenAn(a){const l=[];if(a.ner!=null)l.push('Nervio: '+a.ner.toFixed(1)+' mm');if(a.seno!=null)l.push('Seno: '+(a.seno<=0?'invade '+(-a.seno).toFixed(1):a.seno.toFixed(1))+' mm');
+  if(a.vest!=null)l.push('Cortical V/L: '+a.vest.toFixed(1)+' / '+a.ling.toFixed(1)+' mm');if(a.hu!=null)l.push('Densidad ~'+a.hu+' HU ('+a.clase+')');return l;}
+// ---- vista 3D: trazado de rayos sobre el volumen, superficie del hueso con sombreado ----
+const V3={yaw:0.6,pitch:0.35,zoom:1,busy:false};
+// segmentación por densidad: dientes = zona densa conectada cerca de la arcada; cada diente (grupo conectado) lleva su color
+let SEGM=null;const PAL=Array.from({length:24},(_,j)=>{const h=(j*47%360)/60,c=.62,x=c*(1-Math.abs(h%2-1)),m=.32,[r,g,b]=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h)%6];return[(r+m)*255,(g+m)*255,(b+m)*255];});
+function segmentar(){
+  if(!curve)return toast('Primero traza la arcada para segmentar los dientes');
+  const thr=Math.round((+$('v3d').value+500)/3500*255),mg=Math.round(26/sp);let a=1e9,b=-1e9,c=1e9,d=-1e9;
+  for(let j=0;j<curve.len;j++){a=Math.min(a,curve.x[j]);b=Math.max(b,curve.x[j]);c=Math.min(c,curve.y[j]);d=Math.max(d,curve.y[j]);}
+  const x0=Math.max(1,Math.round(a-mg)),x1=Math.min(nx-2,Math.round(b+mg)),y0=Math.max(1,Math.round(c-mg)),y1=Math.min(ny-2,Math.round(d+mg)),z0=Math.max(1,zLo),z1=Math.min(nz-2,zHi);
+  const w=x1-x0+1,h=y1-y0+1,dd=z1-z0+1,lab=new Uint16Array(w*h*dd),pila=new Int32Array(w*h*dd),tam=[0];let n=0;
+  const hay=(xx,yy,zz)=>vol[((zz+z0)*ny+yy+y0)*nx+xx+x0]>=thr;
+  for(let zz=0;zz<dd;zz++)for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){const k=(zz*h+yy)*w+xx;if(lab[k]||!hay(xx,yy,zz))continue;
+    n++;if(n>65000)break;let sp_=0,cnt=0;pila[sp_++]=k;lab[k]=n;
+    while(sp_){const q=pila[--sp_],qx=q%w,qy=((q/w)|0)%h,qz=(q/(w*h))|0;cnt++;
+      for(const[ox,oy,oz]of[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){const X2=qx+ox,Y2=qy+oy,Z2=qz+oz;if(X2<0||Y2<0||Z2<0||X2>=w||Y2>=h||Z2>=dd)continue;const k2=(Z2*h+Y2)*w+X2;if(!lab[k2]&&hay(X2,Y2,Z2)){lab[k2]=n;pila[sp_++]=k2;}}}
+    tam[n]=cnt;}
+  // se descartan grupos pequeños (ruido) y se renumeran los grandes
+  const minV=Math.round(40/(sp*sp*sp)),map=new Uint16Array(n+1);let m=0;for(let k=1;k<=n;k++)if(tam[k]>=minV)map[k]=++m;
+  for(let k=0;k<lab.length;k++)if(lab[k])lab[k]=map[lab[k]];
+  SEGM={x0,y0,z0,w,h,d:dd,lab,n:m};return m;
+}
+function v3Base(){const cy=Math.cos(V3.yaw),sy=Math.sin(V3.yaw),cp=Math.cos(V3.pitch),sp_=Math.sin(V3.pitch);
+  return{f:[sy*cp,cy*cp,-sp_],r:[cy,-sy,0],u:[sy*sp_,cy*sp_,cp]};}
+function v3Render(Wp){
+  if(!vol)return;const cv=$('c3');cv.width=Wp;cv.height=Wp;const g=cv.getContext('2d'),img=g.createImageData(Wp,Wp),dt=img.data;
+  const{f,r,u}=v3Base(),thr=Math.round((+$('v3t').value+500)/3500*255),z0=Math.round(nz*(+$('v3a').value)/100),z1=Math.round(nz*(+$('v3b').value)/100)-1;
+  const modo=$('v3m').value,Cx=nx/2,Cy=ny/2,Cz=nz/2,E=0.5*Math.max(nx,ny,nz)*1.05/V3.zoom,Rd=Math.hypot(nx,ny,nz)/2;
+  const Lg=norm3([-f[0]+r[0]*0.35+u[0]*0.5,-f[1]+r[1]*0.35+u[1]*0.5,-f[2]+r[2]*0.35+u[2]*0.5]),stp=Wp<300?2:1.2;
+  const lo=[0,0,z0],hi=[nx-1,ny-1,z1];
+  for(let py=0;py<Wp;py++){const sv=(0.5-(py+.5)/Wp)*2*E;
+    for(let px=0;px<Wp;px++){const sx=((px+.5)/Wp-0.5)*2*E,
+      O=[Cx+r[0]*sx+u[0]*sv-f[0]*Rd,Cy+r[1]*sx+u[1]*sv-f[1]*Rd,Cz+r[2]*sx+u[2]*sv-f[2]*Rd];
+      let t0=0,t1=2*Rd,ok=true;
+      for(let a=0;a<3;a++){if(Math.abs(f[a])<1e-9){if(O[a]<lo[a]||O[a]>hi[a]){ok=false;break;}}else{let ta=(lo[a]-O[a])/f[a],tb=(hi[a]-O[a])/f[a];if(ta>tb)[ta,tb]=[tb,ta];if(ta>t0)t0=ta;if(tb<t1)t1=tb;if(t0>t1){ok=false;break;}}}
+      const o=(py*Wp+px)*4;dt[o+3]=255;if(!ok)continue;
+      for(let t=t0;t<=t1;t+=stp){const x=Math.round(O[0]+f[0]*t),y=Math.round(O[1]+f[1]*t),z=Math.round(O[2]+f[2]*t);
+        if(x<1||y<1||z<1||x>=nx-1||y>=ny-1||z>=nz-1)continue;
+        if(vol[(z*ny+y)*nx+x]>=thr){
+          let lb=0;if(SEGM){const xx=x-SEGM.x0,yy=y-SEGM.y0,zz=z-SEGM.z0;if(xx>=0&&yy>=0&&zz>=0&&xx<SEGM.w&&yy<SEGM.h&&zz<SEGM.d)lb=SEGM.lab[(zz*SEGM.h+yy)*SEGM.w+xx];}
+          if((modo==='d'&&!lb)||(modo==='s'&&lb))continue;
+          const gx=vol[(z*ny+y)*nx+x-1]-vol[(z*ny+y)*nx+x+1],gy=vol[(z*ny+y-1)*nx+x]-vol[(z*ny+y+1)*nx+x],gz=vol[((z-1)*ny+y)*nx+x]-vol[((z+1)*ny+y)*nx+x],m=Math.hypot(gx,gy,gz)||1;
+          const sh=0.22+0.78*Math.max(0,(gx*Lg[0]+gy*Lg[1]+gz*Lg[2])/m),dp=1-0.25*(t-t0)/(t1-t0+1);
+          const cl=lb&&modo!=='t'?PAL[lb%PAL.length]:[238,228,205];dt[o]=Math.min(255,cl[0]*sh*dp);dt[o+1]=Math.min(255,cl[1]*sh*dp);dt[o+2]=Math.min(255,cl[2]*sh*dp);break;}}
+    }}
+  g.putImageData(img,0,0);
+  const pr=P=>{const a=P[0]-Cx,b=P[1]-Cy,c=P[2]-Cz;return[(a*r[0]+b*r[1]+c*r[2])/(2*E)*Wp+Wp/2,(0.5-(a*u[0]+b*u[1]+c*u[2])/(2*E))*Wp];},k=Wp/(2*E);
+  g.lineCap='round';
+  const S=nerS();if(S.length>1){g.strokeStyle=NC.lin;g.lineWidth=Math.max(2,mm(NERV.d)*k);g.globalAlpha=.85;g.beginPath();S.forEach((q,j)=>{const p=pr([q.x,q.y,q.z]);j?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);});g.stroke();g.globalAlpha=1;}
+  for(const i of IMP){const e=ejeImp(i),d=dimsDe(i),A=[i.x,i.y,i.z],B=[i.x+e[0]*mm(i.L),i.y+e[1]*mm(i.L),i.z+e[2]*mm(i.L)],o=crn(i),ec=ejeImp(o),Cc=[o.x-ec[0]*mm(d.h),o.y-ec[1]*mm(d.h),o.z-ec[2]*mm(d.h)];
+    const ln=(P,Q,col,w)=>{const a=pr(P),b=pr(Q);g.strokeStyle=col;g.lineWidth=Math.max(2,w*k);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();};
+    ln(A,B,'#4aa8ff',mm(i.d));if(i.corona)ln([o.x,o.y,o.z],Cc,'rgba(255,231,160,.9)',mm(d.md)*0.85);}
+}
+let v3t=null;function v3Soon(){clearTimeout(v3t);v3t=setTimeout(()=>v3Render(560),160);}
+function v3Abrir(){if(!vol)return;$('v3').classList.add('on');v3Render(280);v3Soon();}
+$('b3d').onclick=v3Abrir;$('v3e').onclick=exportarSTL;$('v3x').onclick=()=>$('v3').classList.remove('on');
+document.querySelectorAll('#v3 [data-p]').forEach(b=>b.onclick=()=>{[V3.yaw,V3.pitch]=b.dataset.p.split(',').map(Number);v3Render(280);v3Soon();});
+['v3t','v3a','v3b'].forEach(id=>$(id).oninput=()=>{v3Render(220);v3Soon();});
+$('v3d').onchange=()=>{if(SEGM){const n=segmentar();$('v3i').textContent=n+' dientes/piezas detectados';v3Render(280);v3Soon();}};
+$('v3m').onchange=()=>{if($('v3m').value!=='t'&&!SEGM){const n=segmentar();if(n==null)return($('v3m').value='t');$('v3i').textContent=n+' dientes/piezas detectados (por densidad, aproximado)';}v3Render(280);v3Soon();};
+{const cv=$('c3');let dr=null;
+  cv.addEventListener('mousedown',e=>{dr=[e.clientX,e.clientY];cv.style.cursor='grabbing';});
+  addEventListener('mouseup',()=>{if(dr){dr=null;$('c3').style.cursor='grab';}});
+  addEventListener('mousemove',e=>{if(!dr)return;V3.yaw-=(e.clientX-dr[0])*0.01;V3.pitch=clamp(V3.pitch+(e.clientY-dr[1])*0.01,-1.5708,1.5708);dr=[e.clientX,e.clientY];v3Render(200);v3Soon();});
+  cv.addEventListener('wheel',e=>{e.preventDefault();V3.zoom=clamp(V3.zoom*(e.deltaY<0?1.12:1/1.12),0.5,5);v3Render(220);v3Soon();},{passive:false});}
+$('v3c').onclick=()=>{v3Render(900);CASE.tomas.push({id:uid(),v:'T',k:null,info:'umbral '+$('v3t').value+' HU',fecha:new Date().toISOString(),nota:'',incluir:true,png:$('c3').toDataURL('image/png'),medidas:[]});v3Render(560);touch();panel();toast('Captura 3D guardada en el caso');};
+addEventListener('keydown',e=>{if(e.key==='Escape'&&$('v3').classList.contains('on'))$('v3').classList.remove('on');},true);
+// ---- comparar dos tomas (la B se lee aparte y no toca el caso abierto) ----
+let CB=null,CP={X:0,Y:0,Z:0};
+function cmpMapas(){ // para cada vóxel de A, dónde cae en B (en mm desde el centro, más el desplazamiento manual)
+  const o=[+$('cmx').value,+$('cmy').value,+$('cmz').value],f=(n,nb,spB,d)=>{const a=new Int32Array(n);for(let i=0;i<n;i++){const q=Math.round((i-n/2)*sp/spB+nb/2+d/spB);a[i]=q>=0&&q<nb?q:-1;}return a;};
+  return{x:f(nx,CB.nx,CB.sp,o[0]),y:f(ny,CB.ny,CB.sp,o[1]),z:f(nz,CB.nz,CB.sp,o[2])};
+}
+function cmpRender(){
+  if(!vol)return;mkLut();const modo=$('cmM').value,Mp=CB?cmpMapas():null,pl=[['A',nx,ny],['C',nx,nz],['S',ny,nz]];
+  for(const[k,w,h]of pl){
+    const ca=$('cmA'+k),cb=$('cmB'+k);ca.width=w;ca.height=h;const ga=ca.getContext('2d'),ia=ga.createImageData(w,h);let gb=null,ib=null;
+    if(CB&&modo==='s'){cb.width=w;cb.height=h;gb=cb.getContext('2d');ib=gb.createImageData(w,h);}
+    for(let r=0;r<h;r++)for(let q=0;q<w;q++){
+      let x,y,z;if(k==='A'){x=q;y=r;z=CP.Z;}else if(k==='C'){x=q;y=CP.Y;z=nz-1-r;}else{x=CP.X;y=q;z=nz-1-r;}
+      const va=lut[V(x,y,z)]|0;let vb=0;if(CB){const bx=Mp.x[x],by=Mp.y[y],bz=Mp.z[z];vb=(bx<0||by<0||bz<0)?0:lut[CB.v[(bz*CB.ny+by)*CB.nx+bx]]|0;}
+      const o=(r*w+q)*4;
+      if(!CB||modo==='s'){ia.data[o]=ia.data[o+1]=ia.data[o+2]=va;ia.data[o+3]=255;if(ib){ib.data[o]=ib.data[o+1]=ib.data[o+2]=vb;ib.data[o+3]=255;}}
+      else if(modo==='o'){ia.data[o]=va;ia.data[o+1]=ia.data[o+2]=vb;ia.data[o+3]=255;}
+      else{const d=128+(va-vb)*0.5;ia.data[o]=ia.data[o+1]=ia.data[o+2]=d;ia.data[o+3]=255;}}
+    ga.putImageData(ia,0,0);if(gb)gb.putImageData(ib,0,0);
+    cb.style.display=(CB&&modo==='s')?'block':'none';$('cmBL'+k).style.display=cb.style.display;
+  }
+  $('cmI').textContent=CB?'A: '+(CASE.nombre||M.nombre)+'   ·   B: '+CB.nombre:'Carga una segunda toma para compararla con la actual';
+}
+function cmpArma(){
+  const g=$('cmg');g.replaceChildren();
+  for(const[k,t,n]of[['A','Axial',()=>nz],['C','Coronal',()=>ny],['S','Sagital',()=>nx]]){
+    const key={A:'Z',C:'Y',S:'X'}[k],sl=h('input',{type:'range',min:0,max:n()-1,value:CP[key]});sl.oninput=()=>{CP[key]=+sl.value;cmpRender();};
+    g.append(h('div',{className:'c'},h('small',{textContent:t+' · toma A'}),h('canvas',{id:'cmA'+k}),h('small',{id:'cmBL'+k,textContent:t+' · toma B'}),h('canvas',{id:'cmB'+k}),sl));}
+}
+function cmpAbrir(){if(!vol)return;CP={X:X,Y:Y,Z:Z};cmpArma();$('cmpv').classList.add('on');cmpRender();}
+async function cmpCarga(tipo){
+  $('cmI').textContent='Leyendo toma B…';await new Promise(r=>setTimeout(r,30));
+  const r=await(tipo==='d'?api.abrir(undefined,true):api.abrirVdc(undefined,true));if(!r){$('cmI').textContent='';return;}if(r.error){$('cmI').textContent=r.error;return;}
+  CB={v:r.vol instanceof Uint8Array?r.vol:new Uint8Array(r.vol),nx:r.meta.nx,ny:r.meta.ny,nz:r.meta.nz,sp:r.meta.sp,nombre:(r.state&&r.state.nombre)||r.meta.nombre};
+  ['cmx','cmy','cmz'].forEach(i=>$(i).value=0);cmpRender();
+}
+function masa(v,a,b,c,s){let sx=0,sy=0,sz=0,n=0;for(let z=0;z<c;z+=4)for(let y=0;y<b;y+=4)for(let x=0;x<a;x+=4)if(v[(z*b+y)*a+x]>=s){sx+=x;sy+=y;sz+=z;n++;}return n?[sx/n,sy/n,sz/n]:[a/2,b/2,c/2];}
+function cmpAlinea(){if(!CB)return;const s=Math.round((400+500)/3500*255),A=masa(vol,nx,ny,nz,s),B=masa(CB.v,CB.nx,CB.ny,CB.nz,s);
+  // posición de A en mm desde su centro vs la de B: el desplazamiento hace coincidir ambos centros de masa
+  const d=[(A[0]-nx/2)*sp-(B[0]-CB.nx/2)*CB.sp,(A[1]-ny/2)*sp-(B[1]-CB.ny/2)*CB.sp,(A[2]-nz/2)*sp-(B[2]-CB.nz/2)*CB.sp];
+  [['cmx',d[0]],['cmy',d[1]],['cmz',d[2]]].forEach(([i,v])=>{$(i).value=clamp(Math.round(-v),-60,60);});cmpRender();}
+
+// ---- barra: nombres al pasar el mouse o enfocar, panel de imagen y aria-pressed ----
+{const tip=$('tip'),mostrar=b=>{tip.textContent=b.dataset.tip;tip.hidden=false;const r=b.getBoundingClientRect(),w=tip.offsetWidth;tip.style.top=(r.bottom+6)+'px';tip.style.left=clamp(r.left+r.width/2-w/2,6,innerWidth-w-6)+'px';};
+  document.querySelectorAll('#bar [data-tip]').forEach(b=>{b.onmouseenter=()=>mostrar(b);b.onfocus=()=>{if(b.matches(':focus-visible'))mostrar(b);};b.onmouseleave=b.onblur=()=>{tip.hidden=true;};b.addEventListener('mousedown',()=>{tip.hidden=true;});});
+  const sinc=()=>document.querySelectorAll('#bar .tg').forEach(b=>b.setAttribute('aria-pressed',b.classList.contains('on')));
+  new MutationObserver(sinc).observe($('bar'),{subtree:true,attributes:true,attributeFilter:['class']});sinc();
+  const pop=$('pop'),ab=()=>{const r=$('bImg').getBoundingClientRect();pop.style.top=(r.bottom+8)+'px';pop.style.left=clamp(r.left+r.width/2-130,8,innerWidth-268)+'px';},cerrar=()=>{pop.hidden=true;$('bImg').classList.remove('on');};
+  $('bImg').onclick=e=>{e.stopPropagation();if(pop.hidden){ab();pop.hidden=false;$('bImg').classList.add('on');}else cerrar();};
+  addEventListener('mousedown',e=>{if(!pop.hidden&&!pop.contains(e.target)&&!$('bImg').contains(e.target))cerrar();});
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden)cerrar();},true);}
+
+// ---- ayuda y actualizaciones ----
+async function actualizar(avisar){
+  const r=await api.buscarActualizacion();
+  if(r.error){if(avisar)toast(r.error+' (versión instalada '+r.actual+')',4500);return;}
+  if(r.nueva){const e=$('upd');e.textContent='Hay una versión nueva ('+r.ultima+'). ';const a=h('a',{textContent:'Descargar',href:'#',style:'color:var(--ac)',on:{click:ev=>{ev.preventDefault();api.abrirUrl(r.url);}}});e.append(a);if(avisar)toast('Versión '+r.ultima+' disponible; instalada '+r.actual,5000);}
+  else if(avisar)toast('Ya tienes la última versión ('+r.actual+')',3500);
+}
+const abrirAyuda=async()=>{$('ayuda').classList.remove('off');try{const r=await api.buscarActualizacion();$('verTxt').textContent='Versión instalada '+(r.actual||'');}catch{}};
+$('bAyuda').onclick=abrirAyuda;$('ayCerrar').onclick=()=>$('ayuda').classList.add('off');$('bBuscarAct').onclick=()=>actualizar(true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('ayuda').classList.contains('off')){$('ayuda').classList.add('off');e.stopPropagation();}else if((e.metaKey||e.ctrlKey)&&e.key==='/'){e.preventDefault();abrirAyuda();}},true);
+setTimeout(()=>actualizar(false),6000);
+$('bUn').onclick=deshacer;$('bRe').onclick=rehacer;$('bCmp').onclick=cmpAbrir;$('cmD').onclick=()=>cmpCarga('d');$('cmO').onclick=()=>cmpCarga('o');$('cmA').onclick=cmpAlinea;$('cmM').onchange=cmpRender;
+['cmx','cmy','cmz'].forEach(i=>$(i).oninput=cmpRender);$('cmX').onclick=()=>{$('cmpv').classList.remove('on');CB=null;};
+// ---- exportar STL (malla en mm para impresión 3D o guías): hueso/dientes por tetraedros marchantes + implantes y nervio ----
+function stlMalla(step,incl){
+  const thr=Math.round((+$('v3t').value+500)/3500*255),modo=$('v3m').value,z0=Math.round(nz*(+$('v3a').value)/100),z1=Math.round(nz*(+$('v3b').value)/100)-1;
+  const gx=Math.ceil(nx/step)+2,gy=Math.ceil(ny/step)+2,gz=Math.ceil((z1-z0+1)/step)+2,G=new Uint8Array(gx*gy*gz);
+  for(let k=1;k<gz-1;k++){const z=z0+(k-1)*step;if(z>z1)break;for(let j=1;j<gy-1;j++){const y=(j-1)*step;if(y>=ny)break;for(let i=1;i<gx-1;i++){const x=(i-1)*step;if(x>=nx)break;let v=vol[(z*ny+y)*nx+x];
+    if(v>=thr&&(modo==='d'||modo==='s')){let lb=0;if(SEGM){const xx=x-SEGM.x0,yy=y-SEGM.y0,zz=z-SEGM.z0;if(xx>=0&&yy>=0&&zz>=0&&xx<SEGM.w&&yy<SEGM.h&&zz<SEGM.d)lb=SEGM.lab[(zz*SEGM.h+yy)*SEGM.w+xx];}if((modo==='d'&&!lb)||(modo==='s'&&lb))v=0;}
+    G[(k*gy+j)*gx+i]=v;}}}
+  let B=new Float32Array(1<<21),n=0;
+  const emit=(p,q,r,ref,sg)=>{const nx_=(q[1]-p[1])*(r[2]-p[2])-(q[2]-p[2])*(r[1]-p[1]),ny_=(q[2]-p[2])*(r[0]-p[0])-(q[0]-p[0])*(r[2]-p[2]),nz_=(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),
+    d=nx_*((p[0]+q[0]+r[0])/3-ref[0])+ny_*((p[1]+q[1]+r[1])/3-ref[1])+nz_*((p[2]+q[2]+r[2])/3-ref[2]);
+    if(sg*d<0)[q,r]=[r,q];if(n+9>B.length){const N=new Float32Array(B.length*2);N.set(B);B=N;}
+    B.set(p,n);B.set(q,n+3);B.set(r,n+6);n+=9;};
+  const co=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]],TET=[[0,5,1,6],[0,1,2,6],[0,2,3,6],[0,3,7,6],[0,7,4,6],[0,4,5,6]],val=new Array(8),pos=new Array(8);
+  for(let k=0;k<gz-1;k++)for(let j=0;j<gy-1;j++)for(let i=0;i<gx-1;i++){
+    let dentro=0;for(let c=0;c<8;c++){const v=G[((k+co[c][2])*gy+j+co[c][1])*gx+i+co[c][0]];val[c]=v;if(v>=thr)dentro++;}
+    if(dentro===0||dentro===8)continue;
+    for(let c=0;c<8;c++)pos[c]=[(i-1+co[c][0])*step,(j-1+co[c][1])*step,z0+(k-1+co[c][2])*step];
+    const ep=(a,b)=>{const t=clamp((thr-val[a])/((val[b]-val[a])||1),0,1);return[pos[a][0]+(pos[b][0]-pos[a][0])*t,pos[a][1]+(pos[b][1]-pos[a][1])*t,pos[a][2]+(pos[b][2]-pos[a][2])*t];};
+    for(const T of TET){const ins=T.filter(c=>val[c]>=thr),out=T.filter(c=>val[c]<thr);
+      if(ins.length===1)emit(ep(ins[0],out[0]),ep(ins[0],out[1]),ep(ins[0],out[2]),pos[ins[0]],1);
+      else if(ins.length===3)emit(ep(out[0],ins[0]),ep(out[0],ins[1]),ep(out[0],ins[2]),pos[out[0]],-1);
+      else if(ins.length===2){const[a,b]=ins,[c,d]=out,p1=ep(a,c),p2=ep(a,d),p3=ep(b,d),p4=ep(b,c),m=[0,1,2].map(q=>(pos[a][q]+pos[b][q])/2);emit(p1,p2,p3,m,1);emit(p1,p3,p4,m,1);}}
+  }
+  const hueso=n/9;
+  if(incl){
+    const fr=(A,Bp,rA,rB,seg=14)=>{const w=norm3([Bp[0]-A[0],Bp[1]-A[1],Bp[2]-A[2]]),a=Math.abs(w[2])<.9?[0,0,1]:[1,0,0],u=norm3([w[1]*a[2]-w[2]*a[1],w[2]*a[0]-w[0]*a[2],w[0]*a[1]-w[1]*a[0]]),v=[w[1]*u[2]-w[2]*u[1],w[2]*u[0]-w[0]*u[2],w[0]*u[1]-w[1]*u[0]],mid=[(A[0]+Bp[0])/2,(A[1]+Bp[1])/2,(A[2]+Bp[2])/2];
+      const ring=(C,r,j)=>{const t=j/seg*2*Math.PI,cs=Math.cos(t)*r,sn=Math.sin(t)*r;return[C[0]+u[0]*cs+v[0]*sn,C[1]+u[1]*cs+v[1]*sn,C[2]+u[2]*cs+v[2]*sn];};
+      for(let j=0;j<seg;j++){const a0=ring(A,rA,j),a1=ring(A,rA,j+1),b0=ring(Bp,rB,j),b1=ring(Bp,rB,j+1);emit(a0,b0,b1,mid,1);emit(a0,b1,a1,mid,1);emit(A,a1,a0,mid,1);emit(Bp,b0,b1,mid,1);}};
+    for(const i of IMP){const e=ejeImp(i),d=dimsDe(i),r=mm(i.d/2),A=[i.x,i.y,i.z];fr(A,[A[0]+e[0]*mm(i.L),A[1]+e[1]*mm(i.L),A[2]+e[2]*mm(i.L)],r,r*0.82);
+      if(i.corona){const o=crn(i),ec=ejeImp(o),H=mm(d.h),rc=mm((d.md+d.bl)/4),P=t=>[o.x-ec[0]*H*t,o.y-ec[1]*H*t,o.z-ec[2]*H*t];fr(P(0),P(0.15),r*0.8,r*0.8);for(let q=0;q<4;q++){const t0=0.15+q*0.2125,t1=t0+0.2125;fr(P(t0),P(t1),rc*fCorona((t0-.15)/.85),rc*fCorona((t1-.15)/.85));}}}
+    const S=nerS();for(let k=0;k+4<S.length;k+=4){const a=S[k],b=S[k+4];fr([a.x,a.y,a.z],[b.x,b.y,b.z],mm(NERV.d/2),mm(NERV.d/2),10);}
+  }
+  return{B,n:n/9,hueso};
+}
+function stlBuffer(m){
+  const N=m.n,ab=new ArrayBuffer(84+50*N),dv=new DataView(ab),t=new TextEncoder().encode('odontOS Imagen');for(let j=0;j<t.length;j++)dv.setUint8(j,t[j]);dv.setUint32(80,N,true);
+  const cx=nx/2,cy=ny/2,cz=nz/2,B=m.B;let o=84;
+  for(let q=0;q<N;q++){const P=[0,1,2].map(j=>[(B[q*9+j*3]-cx)*sp,(B[q*9+j*3+1]-cy)*sp,(B[q*9+j*3+2]-cz)*sp]),
+    ux=P[1][0]-P[0][0],uy=P[1][1]-P[0][1],uz=P[1][2]-P[0][2],vx=P[2][0]-P[0][0],vy=P[2][1]-P[0][1],vz=P[2][2]-P[0][2],nxx=uy*vz-uz*vy,nyy=uz*vx-ux*vz,nzz=ux*vy-uy*vx,l=Math.hypot(nxx,nyy,nzz)||1;
+    dv.setFloat32(o,nxx/l,true);dv.setFloat32(o+4,nyy/l,true);dv.setFloat32(o+8,nzz/l,true);o+=12;
+    for(const p of P){dv.setFloat32(o,p[0],true);dv.setFloat32(o+4,p[1],true);dv.setFloat32(o+8,p[2],true);o+=12;}o+=2;}
+  return ab;
+}
+async function exportarSTL(){
+  if(!vol)return;const incl=$('v3s').checked;$('v3i').textContent='Generando malla…';await new Promise(r=>setTimeout(r,60));
+  let step=3,m;for(;;){m=stlMalla(step,incl);if(m.n<=1500000||step>=7)break;step++;$('v3i').textContent='Malla muy grande, reduciendo detalle…';await new Promise(r=>setTimeout(r,30));}
+  if(!m.hueso){$('v3i').textContent='No hay superficie con este umbral';return toast('No hay superficie con este umbral: bájalo o amplía el corte');}
+  const r=await api.stl(stlBuffer(m),(CASE.nombre||M.nombre)+' (3D)');
+  $('v3i').textContent=r?'STL guardado ('+(m.n/1000).toFixed(0)+' mil triángulos, 1 unidad = 1 mm)':'Exportación cancelada';
+}
+function implantes(c,v,w,h){
+  if(!IMP.length||!vol)return;const fs=Math.max(10,Math.round(Math.max(w,h)/36));
+  for(const i of IMP){if(v==='A')dibujaImpA(c,i);else if((v!=='P'&&v!=='X')||curve)dibujaImpL(c,v,i,fs);}
+}
+function distSeg(P,A,B){const vx=B[0]-A[0],vy=B[1]-A[1],l2=vx*vx+vy*vy;let t=l2?((P[0]-A[0])*vx+(P[1]-A[1])*vy)/l2:0;t=Math.max(0,Math.min(1,t));return Math.hypot(P[0]-(A[0]+vx*t),P[1]-(A[1]+vy*t));}
+function hitImp(v,p,q){ // implante o corona bajo el puntero: {i, part}
+  let best=null,bd=1e9,bp='i';if((v==='P'||v==='X')&&!curve)return null;
+  for(const i of IMP){const e=ejeImp(i),d=dimsDe(i),H=[i.x,i.y,i.z],f=k=>a2(v,[H[0]+e[0]*k,H[1]+e[1]*k,H[2]+e[2]*k]);
+    const enZ=(z0,z1)=>v!=='A'||(Z>=Math.min(z0,z1)-1&&Z<=Math.max(z0,z1)+1);
+    if(enZ(i.z,i.z+e[2]*mm(i.L))){const dd=distSeg([p,q],f(0),f(mm(i.L)));if(dd<bd&&dd<=Math.max(mm(i.d/2)*1.4,12)){bd=dd;best=i;bp='i';}}
+    if(i.corona){const o=crn(i),ec=ejeImp(o),fc=k=>a2(v,[o.x+ec[0]*k,o.y+ec[1]*k,o.z+ec[2]*k]);
+      if(enZ(o.z,o.z-ec[2]*mm(d.h))){const dc=distSeg([p,q],fc(0),fc(-mm(d.h)));if(dc<bd&&dc<=Math.max(mm(d.md/2)*0.8,12)){bd=dc;best=i;bp='c';}}}}
+  return best?{i:best,part:bp}:null;
+}
+function selecciona(v,p,q,h){selImp=h.i.id;selPart=h.part;const ob=h.part==='c'?crn(h.i):h.i,h2=a2(v,[ob.x,ob.y,ob.z]);dragImp={v,id:h.i.id,part:h.part,off:[h2[0]-p,h2[1]-q]};panelImp();render();}
+function impClick(v,p,q){
+  const P=desdeVista(v,p,q);if(!P)return toast('Primero traza la arcada');
+  const h=hitImp(v,p,q);if(h)return selecciona(v,p,q,h);
+  const i=nuevoImp({x:X,y:Y,z:Z,...P});IMP.push(i);selImp=i.id;selPart='i';touch();openPanel('imp');panelImp();render();
+}
+function moverImp(v,p,q){
+  const o=dragImp.off||[0,0],P=desdeVista(v,p+o[0],q+o[1]),i=IMP.find(k=>k.id===dragImp.id);if(!P||!i)return;
+  crn(i);
+  if(dragImp.part==='c'){Object.assign(i.c,P);render();return;}
+  const a={x:i.x,y:i.y,z:i.z};Object.assign(i,P);
+  if(i.lig)for(const k in P)i.c[k]+=i[k]-a[k];
+  if(curve)i.ai=idxCurva(i.x,i.y);render();
+}
+function panelImp(){
+  const pn=$('p-imp');pn.replaceChildren();
+  pn.append(h('div',{className:'card'},h('h4',{textContent:'Nervio dentario'}),
+    h('small',{textContent:NERV.p.length?NERV.p.length+' puntos marcados':'Pulsa «Nervio» (tecla N) y marca el conducto en el corte transversal o en la panorámica.'}),
+    h('label',{className:'cmp'},'Diámetro del conducto',(()=>{const s=document.createElement('select');for(const d of[1.5,2,2.5,3,3.5]){const o=document.createElement('option');o.value=d;o.textContent=d+' mm';s.append(o);}s.value=NERV.d;s.onchange=()=>{NERV.d=+s.value;touch();render();};return s;})()),
+    h('label',{className:'inc'},h('input',{type:'checkbox',checked:SEG.on,on:{change:e=>{SEG.on=e.target.checked;render();}}}),' Mostrar margen de seguridad de '+SEG.m+' mm'),
+    h('div',{className:'row'},h('button',{textContent:'Quitar último punto',on:{click:()=>{NERV.p.pop();NERV.v++;touch();panelImp();render();}}}),h('button',{textContent:'Borrar nervio',on:{click:()=>{NERV.p=[];NERV.v++;touch();panelImp();render();}}}))));
+  if(!IMP.length){pn.append(h('div',{className:'empty',textContent:'Pulsa «Implante» (tecla I) y haz clic donde va. Implante y corona son independientes: arrastra cada uno por separado en cualquier corte, o ajusta posición e inclinación en el panel.'}));return;}
+  const cambia=()=>{touch();panelImp();render();};
+  if(IMP.length>1)pn.append(h('div',{className:'card'},h('h4',{textContent:'Paralelismo entre implantes'}),...parAng().map(([a,b,g])=>h('div',{textContent:'Implante '+a+' ↔ '+b+': '+g.toFixed(1)+'°'+(g>15?'  ⚠ divergen mucho':'')}))));
+  IMP.forEach(i=>{
+    const sel=(opts,val,fn)=>{const s=document.createElement('select');for(const o of opts){const op=document.createElement('option');op.value=o[0];op.textContent=o[1];s.append(op);}s.value=val;s.onchange=()=>{fn(s.value);cambia();};return s;};
+    crn(i);
+    const sl=(txt,ob,key,min,max)=>{const o=h('span',{textContent:ob[key]+'°'}),r=h('input',{type:'range',min,max,step:1,value:ob[key]});r.oninput=()=>{ob[key]=+r.value;o.textContent=r.value+'°';render();};r.onchange=()=>touch();return h('label',{className:'cmp'},txt+' ',o,r);};
+    const nud=(txt,ob,carga)=>{const mv=(k,dd)=>{const a=ob[k];ob[k]+=dd;if(carga&&i.lig)i.c[k]+=dd;if(carga&&curve)i.ai=idxCurva(i.x,i.y);touch();render();};
+      return h('div',{className:'row'},h('small',{textContent:txt}),...[['x','←',-1],['x','→',1],['y','↑',-1],['y','↓',1],['z','▲',1],['z','▼',-1]].map(([k,t,sg])=>h('button',{textContent:t,title:{x:'Izquierda/derecha',y:'Adelante/atrás',z:'Arriba/abajo'}[k]+' · 0,5 mm',on:{click:()=>mv(k,sg*mm(0.5))}})));};
+    pn.append(h('div',{className:'card'+(selImp===i.id?' sel':'')},
+      h('h4',{textContent:'Implante '+i.fdi+' · Ø'+i.d+' × '+i.L+' mm',style:'cursor:pointer',on:{click:()=>{selImp=i.id;panelImp();render();}}}),
+      h('small',{textContent:'Medidas convencionales de referencia · corona '+(i.corona?'':'(oculta) ')+'del diente '+i.fdi}),
+      (()=>{const a=analisis(i),l=resumenAn(a),d=h('div',{className:'an'});for(const t of l)d.append(h('div',{textContent:t}));for(const t of a.alertas)d.append(h('div',{className:'al',textContent:'⚠ '+t}));return d;})(),
+      h('label',{className:'cmp'},'Diente / sector',sel(FDI.map(f=>[f,f]),i.fdi,v=>{i.fdi=+v;})),
+      h('label',{className:'cmp'},'Diámetro',sel(DIAM.map(d=>[d,'Ø '+d+' mm · '+claseD(d)]),i.d,v=>{i.d=+v;})),
+      h('label',{className:'cmp'},'Longitud',sel(LONG.map(d=>[d,d+' mm · '+claseL(d)]),i.L,v=>{i.L=+v;})),
+      h('h4',{textContent:'Implante (se mueve solo)'+(selImp===i.id&&selPart!=='c'?'  ● seleccionado':''),style:'cursor:pointer',on:{click:()=>{selImp=i.id;selPart='i';panelImp();render();}}}),nud('Mover',i,true),
+      sl('Vestibular (+) ↔ lingual/palatino (−)',i,'bl',-45,45),sl('Mesial (−) ↔ distal (+)',i,'md',-45,45),
+      h('label',{className:'inc'},h('input',{type:'checkbox',checked:i.corona,on:{change:e=>{i.corona=e.target.checked;cambia();}}}),' Mostrar corona'),
+      ...(i.corona?[h('h4',{textContent:'Corona (se mueve sola)'+(selImp===i.id&&selPart==='c'?'  ● seleccionada':''),style:'cursor:pointer',on:{click:()=>{selImp=i.id;selPart='c';panelImp();render();}}}),nud('Mover',i.c,false),
+        sl('Vestibular (+) ↔ lingual/palatino (−)',i.c,'bl',-45,45),sl('Mesial (−) ↔ distal (+)',i.c,'md',-45,45),
+        h('label',{className:'inc'},h('input',{type:'checkbox',checked:!!i.lig,on:{change:e=>{i.lig=e.target.checked;touch();}}}),' Mover la corona junto con el implante'),
+        h('button',{textContent:'Alinear corona al implante',on:{click:()=>{Object.assign(i.c,{x:i.x,y:i.y,z:i.z,bl:i.bl,md:i.md});cambia();}}})]:[]),
+      h('div',{className:'row'},
+        h('button',{textContent:'Ir al implante',on:{click:()=>{selImp=i.id;X=Math.round(i.x);Y=Math.round(i.y);Z=clamp(Math.round(i.z),0,nz-1);if(curve&&i.ai!=null)ai=clamp(i.ai,0,curve.len-1);panelImp();render();}}}),
+        h('button',{textContent:'Invertir',on:{click:()=>{i.up*=-1;cambia();}}}),
+        h('button',{textContent:'Eliminar',on:{click:()=>{IMP=IMP.filter(k=>k!==i);if(selImp===i.id)selImp=null;cambia();}}}))));
+  });
+}
+
+// ---- capturas ----
+document.querySelectorAll('.cam').forEach(b=>b.onclick=()=>capturar(b.dataset.v));
+function componer(v){ // imagen de una vista tal como está ahora, sin guías, con las medidas de ese corte
+  const selAntes=selImp;selImp=null;clean=true;R[v]();const src=$(CV[v]);
+  const sc=clamp(Math.round(1000/Math.max(src.width,src.height)),1,4),t=document.createElement('canvas');t.width=src.width*sc;t.height=src.height*sc;
+  const g=t.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(src,0,0,t.width,t.height);
+  g.scale(sc,sc);meas(g,v,keyOf(v),src.width,src.height);
+  clean=false;selImp=selAntes;
+  const k=keyOf(v),vis=MEAS.filter(m=>m.v===v&&(v==='P'||m.k===k)).map(valor);
+  const info={A:'corte '+Z,C:'y '+Y,S:'x '+X,P:'',X:'posición '+(ai*sp).toFixed(0)+' mm'}[v];
+  return {png:t.toDataURL('image/png'),medidas:vis,info,k};
+}
+function capturar(v){
+  if(!vol)return;if((v==='P'||v==='X')&&!curve)return toast('Primero traza la arcada');
+  const c=componer(v);render();
+  CASE.tomas.push({id:uid(),v,k:c.k,info:c.info,fecha:new Date().toISOString(),nota:'',incluir:true,png:c.png,medidas:c.medidas});
+  touch();panel();openPanel('tomas');toast('Captura de '+NOM[v].toLowerCase()+' guardada en el caso');
+}
+// Cortes asociados: un corte por cada lugar donde hay medidas, salvo los que el doctor ya capturó e incluyó
+function cortesAsociados(){
+  const usados=new Set(CASE.tomas.filter(t=>t.incluir!==false&&t.k!=null).map(t=>t.v+':'+(t.v==='P'?0:t.k)));
+  const grupos=new Map();
+  for(const m of MEAS){const key=m.v+':'+(m.v==='P'?0:m.k);if(!grupos.has(key))grupos.set(key,{v:m.v,k:m.k});}
+  if(curve)for(const i of IMP)if(i.ai!=null){const a=clamp(i.ai,0,curve.len-1);grupos.set('X:'+a,{v:'X',k:a});grupos.set('P:0',{v:'P',k:0});}
+  const guardado={X,Y,Z,ai},out=[];
+  for(const[key,g]of grupos){
+    if(usados.has(key)||((g.v==='P'||g.v==='X')&&!curve))continue;
+    if(g.v==='A')Z=g.k;else if(g.v==='C')Y=g.k;else if(g.v==='S')X=g.k;else if(g.v==='X')ai=clamp(g.k,0,curve.len-1);
+    const c=componer(g.v);out.push({v:g.v,info:c.info,png:c.png,medidas:c.medidas,nota:'',auto:true});
+  }
+  ({X,Y,Z,ai}=guardado);render();return out;
+}
+
+// ---- panel lateral ----
+function h(tag,att,...kids){const e=document.createElement(tag);for(const k in att||{}){if(k==='on')for(const ev in att.on)e.addEventListener(ev,att.on[ev]);else e[k]=att[k];}for(const c of kids)e.append(c);return e;}
+function openPanel(t){$('side').classList.remove('off');$('bPanel').classList.add('on');tab(t);}
+function tab(t){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('.tp').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));tab.cur=t;}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+$('bPanel').onclick=()=>{const o=$('side').classList.toggle('off');$('bPanel').classList.toggle('on',!o);if(!o&&!tab.cur)tab('tomas');};
+const mmOf=m=>(Math.hypot(m.b[0]-m.a[0],m.b[1]-m.a[1])*sp).toFixed(1);
+const valor=m=>m.t==='pol'?polAr(m.p)[0].toFixed(1)+' mm² · perím. '+polAr(m.p)[1].toFixed(1)+' mm':m.t==='ang'?angOf(m.p).toFixed(1)+'°':m.t==='arr'?((MEAS.filter(x=>x.t==='arr').indexOf(m)+1)+'. '+(m.txt||'Hallazgo')):mmOf(m)+' mm';
+function panel(){
+  const pt=$('p-tomas');pt.replaceChildren();
+  pt.append(h('label',{className:'inc'},h('input',{type:'checkbox',checked:CASE.autoCortes!==false,on:{change:e=>{CASE.autoCortes=e.target.checked;touch();}}}),' Agregar al informe el corte de cada medida'));
+  if(!CASE.tomas.length)pt.append(h('div',{className:'empty',textContent:'Aún no hay capturas. Usa el botón «Captura» de cada vista.'}));
+  CASE.tomas.forEach((t,i)=>pt.append(h('div',{className:'card'},
+    h('img',{src:t.png}),h('h4',{textContent:(i+1)+'. '+NOM[t.v]+(t.info?' · '+t.info:'')}),
+    h('small',{textContent:t.medidas.length?'Medidas: '+t.medidas.join(' · '):'Sin medidas en esta toma'}),
+    h('label',{className:'inc'},h('input',{type:'checkbox',checked:t.incluir!==false,on:{change:e=>{t.incluir=e.target.checked;touch();}}}),' Incluir en el informe'),
+    h('textarea',{rows:2,placeholder:'Nota de esta toma…',value:t.nota,on:{input:e=>{t.nota=e.target.value;touch();}}}),
+    h('div',{className:'row'},h('button',{textContent:'Guardar PNG',on:{click:async()=>{const r=await api.png(t.png,(CASE.nombre||'caso')+' - '+NOM[t.v]);if(r)toast('PNG guardado');}}}),
+      h('button',{textContent:'Eliminar',on:{click:()=>{CASE.tomas.splice(i,1);touch();panel();}}})))));
+  const pm=$('p-med');pm.replaceChildren();
+  if(!MEAS.length)pm.append(h('div',{className:'empty',textContent:'Aún no hay medidas. Pulsa «Regla» (o R) y haz clic en dos puntos.'}));
+  MEAS.forEach((m,i)=>pm.append(h('div',{className:'m',on:{click:()=>{if(m.v==='A')Z=m.k;else if(m.v==='C')Y=m.k;else if(m.v==='S')X=m.k;else if(m.v==='X'&&curve)goAi(m.k);render();}}},
+    h('b',{textContent:valor(m)}),h('span',{textContent:NOM[m.v]+(m.v==='A'?' · corte '+m.k:m.v==='C'?' · y '+m.k:m.v==='S'?' · x '+m.k:m.v==='X'?' · '+(m.k*sp).toFixed(0)+' mm':'')}),
+    h('button',{textContent:'×',on:{click:e=>{e.stopPropagation();MEAS.splice(i,1);touch();panel();render();}}}))));
+{const L=MEAS.filter(m=>!m.t);
+  if(L.length>=2){const sl=n=>{const s=document.createElement('select');L.forEach((m,j)=>{const o=document.createElement('option');o.value=j;o.textContent=valor(m)+' · '+NOM[m.v];s.append(o);});s.value=Math.min(RZ[n],L.length-1);return s;},sa=sl('a'),sb=sl('b'),res=h('b'),
+    ca=()=>{RZ.a=+sa.value;RZ.b=+sb.value;const A=+mmOf(L[RZ.a]),B=+mmOf(L[RZ.b]);res.textContent=B?'A ÷ B = '+(A/B).toFixed(2)+' ('+(A/B*100).toFixed(0)+' %)':'—';};
+    sa.onchange=sb.onchange=ca;sb.value=Math.min(RZ.b,L.length-1);ca();
+    pm.append(h('div',{className:'card'},h('h4',{textContent:'Razón entre dos medidas'}),h('label',{className:'cmp'},'A',sa),h('label',{className:'cmp'},'B',sb),res));}}
+}
+$('nNombre').oninput=e=>{CASE.nombre=e.target.value;touch();};
+$('nNotas').oninput=e=>{CASE.notas=e.target.value;touch();};
+
+// ---- informe PDF ----
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PLANT={general:{t:'Informe de tomografía',g:''},
+  implantes:{t:'Informe de planificación de implantes',g:'Zona edéntula:\nAltura ósea disponible:\nAncho óseo:\nCalidad ósea:\nRelación con nervio dentario / seno maxilar:\nImplante propuesto:\nObservaciones:\n'},
+  endodoncia:{t:'Informe endodóntico por tomografía',g:'Diente:\nNúmero de conductos y morfología:\nLesión periapical (tamaño):\nCalcificaciones o reabsorciones:\nConductos accesorios / fracturas:\nConclusión:\n'},
+  ortodoncia:{t:'Informe ortodóntico por tomografía',g:'Dientes retenidos o impactados:\nPosición y angulación:\nReabsorción radicular de vecinos:\nHueso alveolar (dehiscencias / fenestraciones):\nVía aérea:\nObservaciones:\n'},
+  atm:{t:'Informe de articulación temporomandibular',g:'Cóndilo derecho:\nCóndilo izquierdo:\nEspacio articular:\nCambios degenerativos:\nSimetría:\nConclusión:\n'}};
+$('nPlant').onchange=e=>{CASE.plantilla=e.target.value;touch();};
+$('nGuia').onclick=()=>{const g=PLANT[CASE.plantilla||'general'].g;if(!g)return toast('La plantilla general no tiene guía');const t=$('nNotas');t.value=(t.value?t.value.replace(/\s*$/,'')+'\n\n':'')+g;CASE.notas=t.value;touch();};
+function fechaDicom(d){return d&&d.length===8?d.slice(6,8)+'/'+d.slice(4,6)+'/'+d.slice(0,4):'';}
+function edadDe(nac,fec){
+  if(!nac||nac.length!==8)return '';const f=(fec&&fec.length===8)?new Date(+fec.slice(0,4),+fec.slice(4,6)-1,+fec.slice(6,8)):new Date();
+  let e=f.getFullYear()-(+nac.slice(0,4));const m=f.getMonth()+1-(+nac.slice(4,6));if(m<0||(m===0&&f.getDate()<+nac.slice(6,8)))e--;return e>=0&&e<130?e+' años':'';
+}
+function datosPac(){
+  const p=(M&&M.paciente)||{};
+  return [['Paciente',p.nombre],['ID',p.id],['Edad',edadDe(p.nac,p.fecha)],['Sexo',({M:'Masculino',F:'Femenino',O:'Otro'})[p.sexo]||p.sexo],['Fecha del estudio',fechaDicom(p.fecha)],['Centro',p.institucion]].filter(r=>r[1]);
+}
+function infoPaciente(){
+  const l=datosPac(),e=$('pi');e.replaceChildren();
+  if(!l.length){e.textContent='El archivo no trae datos del paciente.';return;}
+  for(const[k,v]of l)e.append(h('div',{},h('b',{textContent:k+': '}),v));
+}
+async function informe(){
+  if(!vol)return;
+  const f=new Date().toLocaleDateString('es-EC',{day:'numeric',month:'long',year:'numeric'});
+  const items=[...CASE.tomas.filter(t=>t.incluir!==false),...(CASE.autoCortes!==false?cortesAsociados():[])];
+  const tomas=items.map((t,i)=>`<figure><img src="${t.png}"><figcaption><b>${i+1}. ${t.auto?'Corte asociado · ':''}${NOM[t.v]}${t.info?' · '+esc(t.info):''}</b>${t.medidas.length?'<br><span class="mm">Medidas: '+t.medidas.map(esc).join(' · ')+'</span>':''}${t.nota?'<br>'+esc(t.nota).replace(/\n/g,'<br>'):''}</figcaption></figure>`).join('');
+  const lugarM=m=>NOM[m.v]+(m.v==='A'?' · corte '+m.k:m.v==='C'?' · y '+m.k:m.v==='S'?' · x '+m.k:m.v==='X'?' · '+(m.k*sp).toFixed(0)+' mm':'');
+  const hall=MEAS.filter(m=>m.t==='arr').map((m,i)=>`<tr><td><b>${i+1}</b></td><td>${esc(m.txt||'Hallazgo')}</td><td>${esc(lugarM(m))}</td></tr>`).join('');
+  const med=MEAS.filter(m=>m.t!=='arr').map(m=>`<tr><td>${NOM[m.v]}${m.v==='A'?' · corte '+m.k:m.v==='C'?' · y '+m.k:m.v==='S'?' · x '+m.k:m.v==='X'?' · '+(m.k*sp).toFixed(0)+' mm':''}</td><td><b>${esc(valor(m))}</b></td></tr>`).join('');
+  const imps=IMP.map(i=>`<tr><td><b>Diente ${i.fdi}</b></td><td>Ø ${i.d} × ${i.L} mm</td><td>Corona ${i.corona?'incluida':'no incluida'} · inclinación V/L ${i.bl}°, M/D ${i.md}°<br><span class="mm">${resumenAn(analisis(i)).join(' · ')}</span>${analisis(i).alertas.length?'<br><b style="color:#c0392b">⚠ '+analisis(i).alertas.join(' · ')+'</b>':''}</td></tr>`).join('');
+  const pac=datosPac().map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+  const cab=(CLIN.logo||CLIN.nombre||CLIN.contacto)?`<div class="cab">${CLIN.logo?`<img class="logo" src="${CLIN.logo}">`:'<span></span>'}<div class="clin"><b>${esc(CLIN.nombre||'')}</b>${CLIN.contacto?'<br>'+esc(CLIN.contacto):''}</div></div>`:'';
+  const firma=(CLIN.firma||CLIN.doctor||CLIN.registro)?`<div class="firma">${CLIN.firma?`<img src="${CLIN.firma}">`:'<div style="height:54px"></div>'}<div class="linea"></div>${CLIN.doctor?'<b>'+esc(CLIN.doctor)+'</b>':''}${CLIN.registro?'<br>Registro: '+esc(CLIN.registro):''}</div>`:'';
+  const html=`<!doctype html><meta charset="utf-8"><style>
+  @page{margin:16mm 14mm}body{font:12px -apple-system,Helvetica,Arial,sans-serif;color:#1b1e24;margin:0}
+  .cab{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #1b1e24;padding-bottom:10px;margin-bottom:14px}.logo{max-height:60px;max-width:200px}.clin{text-align:right;color:#5b6370;line-height:1.45}.clin b{color:#1b1e24;font-size:14px}
+  h1{font-size:22px;margin:0 0 2px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#5b6370;margin:20px 0 8px;border-bottom:1px solid #d9dde3;padding-bottom:4px}
+  .sub{color:#5b6370}.notas{white-space:pre-wrap;line-height:1.5}
+  .pac{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px;margin:12px 0;padding:10px;background:#f4f6f8;border-radius:6px}.pac span{display:block;color:#8a919c;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+  .g{display:grid;grid-template-columns:1fr 1fr;gap:14px}figure{margin:0;break-inside:avoid;border:1px solid #d9dde3;border-radius:6px;padding:8px}
+  figure img{width:100%;display:block;background:#000;border-radius:3px}figcaption{margin-top:6px;line-height:1.45}.mm{color:#8a6d00}
+  table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #e6e9ee;padding:5px 4px}
+  .firma{margin-top:36px;width:240px;break-inside:avoid;text-align:center;line-height:1.5}.firma img{max-height:60px;max-width:220px}.linea{border-top:1px solid #1b1e24;margin:4px 0 6px}</style>
+  ${cab}<h1>${esc(PLANT[CASE.plantilla||'general'].t)}</h1><div class="sub">${esc(CASE.nombre||M.nombre)} · ${f}<br>Volumen ${nx}×${ny}×${nz} · resolución ${sp} mm</div>
+  ${pac?'<div class="pac">'+pac+'</div>':''}
+  ${CASE.notas?'<h2>Apuntes</h2><div class="notas">'+esc(CASE.notas)+'</div>':''}
+  ${tomas?'<h2>Tomas</h2><div class="g">'+tomas+'</div>':''}
+  ${hall?'<h2>Hallazgos</h2><table>'+hall+'</table>':''}
+  ${med?'<h2>Mediciones</h2><table>'+med+'</table>':''}
+  ${imps?'<h2>Implantes planificados</h2><table>'+imps+'</table>'+(IMP.length>1?'<p class="sub">Paralelismo: '+parAng().map(([a,b,g])=>a+'–'+b+' '+g.toFixed(1)+'°').join(' · ')+'</p>':'')+'<p class="sub">Planificación virtual con imagen representativa. Las distancias y la densidad son estimaciones sobre la tomografía: verificar medidas y estructuras vecinas antes de intervenir.</p>':''}
+  ${firma}`;
+  const r=await api.informe(html,CASE.nombre||M.nombre);
+  if(r&&r.error)toast('No se pudo crear el PDF: '+r.error,5000);else if(r)toast('Informe PDF guardado');
+}
+$('bPdf').onclick=informe;
+
+// ---- arcada automática (desde los dientes densos) ----
+const T8=Math.round((1400+500)/3500*255);
+function autoArch(){ // shortcut: asume una sola arcada y que el cuello/rama queda en el 36% inferior de la imagen
+  const cnt=new Float32Array(nz),area=nx*ny;let zp=0;
+  for(let z=0;z<nz;z++){let c=0;const o=z*area;for(let i=0;i<area;i+=3)if(vol[o+i]>T8)c++;cnt[z]=c;if(c>cnt[zp])zp=z;}
+  const z0=Math.max(0,zp-Math.round(3.2/sp)),z1=Math.min(nz,zp+Math.round(4/sp)),mip=new Uint8Array(area);
+  for(let z=z0;z<z1;z++){const o=z*area;for(let i=0;i<area;i++)if(vol[o+i]>T8)mip[i]=1;}
+  const box=(a,r,mode)=>{const f=new Float32Array(area),g=new Float32Array(area);
+    const run=(src,dst,len,stride,lines,ls)=>{for(let l=0;l<lines;l++)for(let k=0;k<len;k++){let acc=mode===2?1:0,c=0;
+      for(let d=-r;d<=r;d++){const kk=k+d;if(kk<0||kk>=len)continue;const v=src[l*ls+kk*stride];c++;if(mode===0)acc+=v;else if(mode===1)acc=Math.max(acc,v);else acc=Math.min(acc,v);}
+      dst[l*ls+k*stride]=mode===0?acc/c:acc;}};
+    run(a,f,nx,1,ny,nx);run(f,g,ny,nx,nx,1);return g;};
+  let m=box(mip,2,0).map(v=>v>0.3?1:0);m=box(box(m,6,1),6,2);
+  for(let i=Math.floor(ny*0.64)*nx;i<area;i++)m[i]=0;
+  const lab=new Int32Array(area);let best=0,bestN=0,id=0;
+  for(let s0=0;s0<area;s0++){if(!m[s0]||lab[s0])continue;id++;let n=0;const st=[s0];lab[s0]=id;
+    while(st.length){const p=st.pop();n++;const x=p%nx,y=(p/nx)|0;
+      for(const q of [x>0?p-1:-1,x<nx-1?p+1:-1,y>0?p-nx:-1,y<ny-1?p+nx:-1])if(q>=0&&m[q]&&!lab[q]){lab[q]=id;st.push(q);}}
+    if(n>bestN){bestN=n;best=id;}}
+  if(bestN<400)return null;
+  const xs=[],ys=[];for(let i=0;i<area;i++)if(lab[i]===best){xs.push(i%nx);ys.push((i/nx)|0);}
+  const mean=a=>a.reduce((p,c)=>p+c,0)/a.length;let mn=1e9,mx=0;for(const y of ys){if(y<mn)mn=y;if(y>mx)mx=y;}
+  const cx=mean(xs),cy=mx+0.2*(mx-mn),ang=xs.map((x,i)=>Math.atan2(ys[i]-cy,x-cx)),rad=xs.map((x,i)=>Math.hypot(x-cx,ys[i]-cy));
+  let a0=1e9,a1=-1e9;for(const a of ang){if(a<a0)a0=a;if(a>a1)a1=a;}
+  const B=14,out=[];
+  for(let b=0;b<B;b++){const lo=a0+(a1-a0)*b/B,hi=a0+(a1-a0)*(b+1)/B,rs=[];
+    for(let i=0;i<ang.length;i++)if(ang[i]>=lo&&ang[i]<hi)rs.push(rad[i]);
+    if(rs.length>5){rs.sort((p,q)=>p-q);const r=rs[rs.length>>1],a=(lo+hi)/2;out.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}}
+  return {pts:out,z:Math.round((z0+z1)/2)};
+}
+
+// ---- cargar / guardar ----
+function serialize(){return {plantilla:CASE.plantilla||'general',nervio:NERV,implantes:IMP,autoCortes:CASE.autoCortes!==false,nombre:CASE.nombre,notas:CASE.notas,tomas:CASE.tomas,medidas:MEAS,arcada:pts,wl:{L,W},slab:+$('slab').value,zc:zLo+Math.round(7/sp),pos:{X,Y,Z,ai}};}
+function cargarDatos(r){
+  M=r.meta;nx=M.nx;ny=M.ny;nz=M.nz;sp=M.sp;vol=r.vol instanceof Uint8Array?r.vol:new Uint8Array(r.vol);
+  const s=r.state;pts=[];curve=null;pano=null;tracing=false;tool=null;rul=null;ai=0;zoomReset();
+  $('bTrace').classList.remove('on');['bRuler','bAng','bArr','bImp','bNer','bPol'].forEach(i=>$(i).classList.remove('on'));$('main').classList.remove('ruler');
+  const a=autoArch();M.auto=a?a.pts:[];M.zAuto=a?a.z:nz>>1;
+  CASE={nombre:(s&&s.nombre)||M.nombre,notas:(s&&s.notas)||'',tomas:(s&&s.tomas)||[],autoCortes:!s||s.autoCortes!==false,plantilla:(s&&s.plantilla)||'general'};MEAS=(s&&s.medidas)||[];SEGM=null;IMP=(s&&s.implantes)||[];NERV=(s&&s.nervio)||{d:2,p:[],v:0};NERV.v=(NERV.v||0)+1;selImp=null;dragImp=null;
+  X=nx>>1;Y=ny>>1;Z=M.zAuto;
+  if(s){L=s.wl.L;W=s.wl.W;$('lvl').value=L;$('wid').value=W;$('slab').value=s.slab;({X,Y,Z}=s.pos);pts=s.arcada||[];if(pts.length>1){const Zs=Z;Z=s.zc!=null?s.zc:Z;buildCurve(true);Z=Zs;goAi(s.pos.ai||0);}}
+  $('nPlant').value=CASE.plantilla;$('nNombre').value=CASE.nombre;$('nNotas').value=CASE.notas;infoPaciente();panelImp();
+  $('start').classList.add('off');dirty=false;api.sucio(false);title();panel();
+  if(!s){if(a)$('bAuto').click();else toast('No se detectó la arcada: usa «Trazar arcada»');dirty=false;api.sucio(false);title();}
+  render();  hisIni();
+}
+function falla(t){$('smsg').textContent=t;$('start').classList.remove('off');}
+async function abrirDicom(dir){$('smsg').textContent='Leyendo archivos…';await new Promise(r=>setTimeout(r,30));const r=await api.abrir(dir);
+  if(!r){$('smsg').textContent='';return;}if(r.error)return falla(r.error);cargarDatos(r);toast('Escáner leído. Guarda el caso (Cmd+S) para abrirlo al instante la próxima vez.',4500);}
+async function abrirVdc(p){$('smsg').textContent='Abriendo caso…';await new Promise(r=>setTimeout(r,30));const r=await api.abrirVdc(p);
+  if(!r){$('smsg').textContent='';return;}if(r.error)return falla(r.error);cargarDatos(r);toast('Caso abierto');}
+async function guardar(como){
+  if(!vol)return;toast('Guardando…',60000);const r=await api.guardar(serialize(),como,vol);
+  if(!r){$('toast').style.display='none';return;}if(r.error)return toast('No se pudo guardar: '+r.error,5000);
+  dirty=false;api.sucio(false);title();toast('Caso guardado ('+r.mb+' MB)');
+}
+function elegir(){ // «Abrir…» de la barra: pregunta qué abrir con el menú del sistema
+  $('start').classList.remove('off');$('smsg').textContent='';$('sBack').style.display=vol?'block':'none';recientes();
+}
+async function recientes(){
+  const l=await api.recientes(),box=$('rec');box.replaceChildren();$('recw').style.display=l.length?'block':'none';
+  for(const r of l)box.append(h('button',{className:'rc',on:{click:()=>r.tipo==='vdc'?abrirVdc(r.ruta):abrirDicom(r.ruta)}},
+    h('b',{textContent:r.nombre}),h('span',{textContent:r.tipo==='vdc'?'caso guardado':'carpeta DICOM',style:'color:var(--mut)'}),h('small',{textContent:new Date(r.fecha).toLocaleDateString('es-EC')})));
+}
+$('sBack').onclick=()=>$('start').classList.add('off');$('sDicom').onclick=()=>abrirDicom();$('sVdc').onclick=()=>abrirVdc();$('bOpen').onclick=elegir;$('bSave').onclick=()=>guardar(false);
+api.onMenu(a=>{if(a==='ayuda')return abrirAyuda();if(a==='actualizar')return actualizar(true);if(a==='deshacer'||a==='rehacer'){const e=document.activeElement;if(e&&/INPUT|TEXTAREA/.test(e.tagName)){document.execCommand(a==='deshacer'?'undo':'redo');return;}return a==='deshacer'?deshacer():rehacer();}if(a==='dicom')abrirDicom();else if(a==='vdc')abrirVdc();else if(a==='guardar')guardar(false);else if(a==='guardar-como')guardar(true);else if(a==='informe')informe();});
+api.onAbrirVdc(p=>abrirVdc(p));
+let tmpC={};
+function vistaImgs(){for(const[k,id]of[['logo','cLogoI'],['firma','cFirmaI']]){const i=$(id);i.src=tmpC[k]||'';i.style.display=tmpC[k]?'block':'none';}}
+async function elegirImg(maxw){
+  const d=await api.imagen();if(!d)return null;
+  return new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,maxw/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL(/^data:image\/png/.test(d)?'image/png':'image/jpeg',0.9));};im.src=d;});
+}
+function abrirClin(){$('cNom').value=CLIN.nombre||'';$('cDoc').value=CLIN.doctor||'';$('cReg').value=CLIN.registro||'';$('cCon').value=CLIN.contacto||'';tmpC={logo:CLIN.logo||'',firma:CLIN.firma||''};vistaImgs();$('clin').classList.remove('off');}
+$('bClin').onclick=abrirClin;$('cNo').onclick=()=>$('clin').classList.add('off');
+$('cLogoB').onclick=async()=>{const d=await elegirImg(500);if(d){tmpC.logo=d;vistaImgs();}};$('cLogoQ').onclick=()=>{tmpC.logo='';vistaImgs();};
+$('cFirmaB').onclick=async()=>{const d=await elegirImg(500);if(d){tmpC.firma=d;vistaImgs();}};$('cFirmaQ').onclick=()=>{tmpC.firma='';vistaImgs();};
+$('cOk').onclick=async()=>{CLIN={nombre:$('cNom').value.trim(),doctor:$('cDoc').value.trim(),registro:$('cReg').value.trim(),contacto:$('cCon').value.trim(),logo:tmpC.logo,firma:tmpC.firma};await api.cfgGuardar(CLIN);$('clin').classList.add('off');toast('Datos de la clínica guardados');};
+(async()=>{CLIN=(await api.cfgLeer())||{};recientes();const i=await api.inicial();if(i.vdc)abrirVdc(i.vdc);else if(i.dir)abrirDicom(i.dir);})();
+</script>
+</body>
+</html>

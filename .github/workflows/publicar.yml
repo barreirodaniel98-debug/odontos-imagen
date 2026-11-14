@@ -1,0 +1,24 @@
+# Al subir una etiqueta (por ejemplo v1.2.0) arma las apps de Mac y Windows y las publica como versión en GitHub.
+name: Publicar versión
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  construir:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: ./build.sh
+      - run: ./build-win.sh
+      - name: Comprimir
+        run: |
+          ditto -c -k --keepParent "$HOME/Desktop/odontOS Imagen.app" odontOS-Imagen-mac.zip
+          cp "$HOME/Desktop/odontOS Imagen (Windows).zip" odontOS-Imagen-windows.zip
+      - name: Publicar
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: gh release create "${{ github.ref_name }}" odontOS-Imagen-mac.zip odontOS-Imagen-windows.zip --title "odontOS Imagen ${{ github.ref_name }}" --generate-notes
