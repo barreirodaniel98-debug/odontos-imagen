@@ -151,7 +151,7 @@ if(!app.requestSingleInstanceLock())app.quit();
 else app.on('second-instance',(_e,argv)=>{const p=argv.find(x=>/\.(oim|vdc)$/.test(x));if(win){if(win.isMinimized())win.restore();win.focus();if(p)win.webContents.send('abrir-vdc',p);}});
 app.on('window-all-closed',()=>app.quit());
 // ---- actualizaciones: se consulta la última versión publicada en GitHub y se abre la descarga (la app no está firmada, así que no se actualiza sola) ----
-const REPO='barreirodaniel-debug/odontos-imagen';
+const REPO='barreirodaniel98-debug/odontos-imagen';
 const vNum=v=>String(v).replace(/^v/,'').split('.').map(n=>parseInt(n)||0);
 const esMayor=(a,b)=>{const x=vNum(a),y=vNum(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return(x[i]||0)>(y[i]||0);}return false;};
 async function buscarActualizacion(){

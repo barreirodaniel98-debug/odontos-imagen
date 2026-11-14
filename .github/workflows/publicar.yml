@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm ci
+      - run: node node_modules/electron/install.js
       - run: ./build.sh
       - run: ./build-win.sh
       - name: Comprimir
